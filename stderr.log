@@ -815,3 +815,4 @@ Traceback (most recent call last):
   File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
     raise DisallowedHost(msg)
 django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Not Found: /favicon.ico
