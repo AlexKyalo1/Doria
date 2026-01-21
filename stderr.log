@@ -1,0 +1,817 @@
+Traceback (most recent call last):
+  File "/home/truoprga/doria/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'doria/wsgi.py')
+  File "/opt/alt/python39/lib64/python3.9/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 711, in _load
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "doria/wsgi.py", line 16, in <module>
+    application = get_wsgi_application()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/registry.py", line 83, in populate
+    raise RuntimeError("populate() isn't reentrant")
+RuntimeError: populate() isn't reentrant
+[UID:1147][1386488] Child process with pid: 1387004 was killed by signal: 15, core dumped: no
+Traceback (most recent call last):
+  File "/home/truoprga/doria/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'doria/wsgi.py')
+  File "/opt/alt/python39/lib64/python3.9/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 711, in _load
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "doria/wsgi.py", line 16, in <module>
+    application = get_wsgi_application()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/registry.py", line 83, in populate
+    raise RuntimeError("populate() isn't reentrant")
+RuntimeError: populate() isn't reentrant
+[UID:1147][1386488] Child process with pid: 1387011 was killed by signal: 15, core dumped: no
+Traceback (most recent call last):
+  File "/home/truoprga/doria/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'doria/wsgi.py')
+  File "/opt/alt/python39/lib64/python3.9/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 711, in _load
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "doria/wsgi.py", line 16, in <module>
+    application = get_wsgi_application()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/registry.py", line 91, in populate
+    app_config = AppConfig.create(entry)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/config.py", line 193, in create
+    import_module(entry)
+  File "/opt/alt/python39/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 984, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'accounts'
+Traceback (most recent call last):
+  File "/home/truoprga/doria/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'doria/wsgi.py')
+  File "/opt/alt/python39/lib64/python3.9/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 711, in _load
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "doria/wsgi.py", line 16, in <module>
+    application = get_wsgi_application()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/registry.py", line 83, in populate
+    raise RuntimeError("populate() isn't reentrant")
+RuntimeError: populate() isn't reentrant
+[UID:1147][1391322] Child process with pid: 1391336 was killed by signal: 15, core dumped: no
+Traceback (most recent call last):
+  File "/home/truoprga/doria/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'doria/wsgi.py')
+  File "/opt/alt/python39/lib64/python3.9/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 711, in _load
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "doria/wsgi.py", line 16, in <module>
+    application = get_wsgi_application()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/registry.py", line 91, in populate
+    app_config = AppConfig.create(entry)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/config.py", line 193, in create
+    import_module(entry)
+  File "/opt/alt/python39/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 984, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'accounts'
+Traceback (most recent call last):
+  File "/home/truoprga/doria/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'doria/wsgi.py')
+  File "/opt/alt/python39/lib64/python3.9/imp.py", line 171, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 711, in _load
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "doria/wsgi.py", line 16, in <module>
+    application = get_wsgi_application()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/wsgi.py", line 12, in get_wsgi_application
+    django.setup(set_prefix=False)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/apps/registry.py", line 83, in populate
+    raise RuntimeError("populate() isn't reentrant")
+RuntimeError: populate() isn't reentrant
+[UID:1147][1391340] Child process with pid: 1391354 was killed by signal: 15, core dumped: no
+Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/sqlite3/base.py", line 328, in execute
+    return super().execute(query, params)
+sqlite3.OperationalError: no such table: security_securityfacility
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/truoprga/doria/core/views.py", line 7, in home
+    "facility_count": SecurityFacility.objects.count(),
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/models/query.py", line 610, in count
+    return self.query.get_count(using=self.db)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/models/sql/query.py", line 568, in get_count
+    return obj.get_aggregation(using, {"__count": Count("*")})["__count"]
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/models/sql/query.py", line 554, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/utils.py", line 102, in execute
+    return super().execute(sql, params)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/db/backends/sqlite3/base.py", line 328, in execute
+    return super().execute(query, params)
+django.db.utils.OperationalError: no such table: security_securityfacility
+Not Found: /favicon.ico
+Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/truoprga/doria/core/views.py", line 10, in home
+    return render(request, "core/home.html", context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 175, in render
+    return self._render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 966, in render_annotated
+    return self.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 132, in render
+    compiled_parent = self.get_parent(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 129, in get_parent
+    return self.find_template(parent, context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 107, in find_template
+    template, origin = context.template.engine.find_template(
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/base.py", line 23, in get_template
+    contents = self.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 26, in get_contents
+    return origin.loader.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/filesystem.py", line 23, in get_contents
+    return fp.read()
+  File "/opt/alt/python39/lib64/python3.9/codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa9 in position 19220: invalid start byte
+Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/truoprga/doria/core/views.py", line 10, in home
+    return render(request, "core/home.html", context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 175, in render
+    return self._render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 966, in render_annotated
+    return self.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 132, in render
+    compiled_parent = self.get_parent(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 129, in get_parent
+    return self.find_template(parent, context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 107, in find_template
+    template, origin = context.template.engine.find_template(
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/base.py", line 23, in get_template
+    contents = self.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 26, in get_contents
+    return origin.loader.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/filesystem.py", line 23, in get_contents
+    return fp.read()
+  File "/opt/alt/python39/lib64/python3.9/codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa9 in position 19220: invalid start byte
+Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/truoprga/doria/core/views.py", line 10, in home
+    return render(request, "core/home.html", context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 175, in render
+    return self._render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 966, in render_annotated
+    return self.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 132, in render
+    compiled_parent = self.get_parent(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 129, in get_parent
+    return self.find_template(parent, context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 107, in find_template
+    template, origin = context.template.engine.find_template(
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/base.py", line 23, in get_template
+    contents = self.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 26, in get_contents
+    return origin.loader.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/filesystem.py", line 23, in get_contents
+    return fp.read()
+  File "/opt/alt/python39/lib64/python3.9/codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa9 in position 19220: invalid start byte
+Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/truoprga/doria/core/views.py", line 10, in home
+    return render(request, "core/home.html", context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 175, in render
+    return self._render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/base.py", line 966, in render_annotated
+    return self.render(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 132, in render
+    compiled_parent = self.get_parent(context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 129, in get_parent
+    return self.find_template(parent, context)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loader_tags.py", line 107, in find_template
+    template, origin = context.template.engine.find_template(
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/base.py", line 23, in get_template
+    contents = self.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/cached.py", line 26, in get_contents
+    return origin.loader.get_contents(origin)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/template/loaders/filesystem.py", line 23, in get_contents
+    return fp.read()
+  File "/opt/alt/python39/lib64/python3.9/codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa9 in position 19220: invalid start byte
+Not Found: /facilities
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Not Found: /.env
+Not Found: /index.js
+Not Found: /backup.sql
+Not Found: /debug.log
+Not Found: /database.sql
+Not Found: /storage/logs/laravel.log
+Not Found: /auth.json
+Not Found: /music.js
+Not Found: /phpinfo
+Not Found: /_profiler/phpinfo
+Not Found: /dump.sql
+Not Found: /YK_KZ_Base.js
+Not Found: /api/.env
+Not Found: /log/error.log
+Not Found: /backend/.env
+Not Found: /main.js
+Not Found: /phpinfo.php
+Not Found: /js
+Not Found: /.env.local
+Not Found: /info.php
+Not Found: /.env.production
+Not Found: /core/.env
+Not Found: /laravel/.env
+Not Found: /test.php
+Not Found: /config/.env
+Not Found: /app/.env
+Not Found: /src/.env
+Not Found: /storage/.env
+Not Found: /vendor/.env
+Not Found: /assets/.env
+Not Found: /server/.env
+Not Found: /v2/.env
+Not Found: /Dockerfile
+Not Found: /docker/.env
+Not Found: /.env.save
+Not Found: /frontend/.env
+Not Found: /public/.env
+Not Found: /uploads/.env
+Not Found: /administrator/.env
+Not Found: /v1/.env
+Not Found: /tools/.env
+Not Found: /en/.env
+Not Found: /cron/.env
+Not Found: /cronlab/.env
+Not Found: /apps/.env
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Not Found: /core/app/.env
+Not Found: /kubernetes/.env
+Not Found: /client/.env
+Not Found: /lab/.env
+Not Found: /exapi/.env
+Not Found: /web/.env
+Not Found: /lib/.env
+Not Found: /plugins/.env
+Not Found: /modules/.env
+Not Found: /psnlink/.env
+Not Found: /db_backup.sql
+Not Found: /core/Datavase/.env
+Not Found: /includes/.env
+Not Found: /site/.env
+Not Found: /themes/.env
+Not Found: /error.log
+Not Found: /sitemaps/.env
+Not Found: /database/.env
+Not Found: /.env.sample
+Not Found: /saas/.env
+Not Found: /_debug
+Not Found: /backup.zip
+Not Found: /server.php
+Not Found: /secrets.json
+Not Found: /php_version.php
+Not Found: /docker-compose.yml
+Not Found: /api/config
+Not Found: /pi.php
+Not Found: /.env.development
+Not Found: /.env.test
+Not Found: /.env.backup
+Not Found: /.env.old
+Not Found: /aws.json
+Not Found: /var/www/html/error_log
+Not Found: /php.php
+Not Found: /aws-config.json
+Not Found: /.env.prod.local
+Not Found: /sites/default/settings.php
+Not Found: /.DS_Store
+Not Found: /i.php
+Not Found: /.env.bak
+Not Found: /.env.1
+Not Found: /.env.dev.local
+Not Found: /api/v2/config
+Not Found: /.aws/credentials
+Not Found: /app/etc/local.xml
+Not Found: /api/v1/config
+Not Found: /.env.remote
+Not Found: /.env.staging
+Not Found: /logs/error.log
+Not Found: /php_error.log
+Not Found: /configuration.php
+Not Found: /.well-known/security.txt
+Not Found: /credentials.json
+Not Found: /.dockerignore
+Not Found: /.secrets
+Not Found: /var/log/nginx/error.log
+Not Found: /var/log/apache2/error.log
+Not Found: /app/etc/env.php
+Not Found: /logs/application.log
+Not Found: /app/logs/dev.log
+Not Found: /app/logs/prod.log
+Not Found: /config.zip
+Not Found: /.dockerenv
+Not Found: /security.txt
+Not Found: /apikeys.json
+Not Found: /.azure/credentials
+Not Found: /azure.json
+Not Found: /.gcloud/credentials
+Not Found: /.s3cfg
+Not Found: /.aws/config
+Not Found: /debug.php
+Not Found: /info2.php
+Not Found: /info1.php
+Not Found: /php_info.php
+Not Found: /errors.log
+Not Found: /Thumbs.db
+Not Found: /site-backup.zip
+Not Found: /backup.tar.gz
+Not Found: /k8s-config.yml
+Not Found: /kubernetes.yml
+Not Found: /.docker/config.json
+Not Found: /docker-compose.override.yml
+Not Found: /docker-compose.yaml
+Not Found: /oauth.json
+Not Found: /tokens.json
+Not Found: /keys.json
+Not Found: /.api_keys
+Not Found: /api_keys.json
+Not Found: /secrets.yml
+Not Found: /gcp-credentials.json
+Not Found: /s3.yml
+Not Found: /.env.2
+Not Found: /testphp.php
+Not Found: /infophp.php
+Not Found: /php-info.php
+Not Found: /info_php.php
+Not Found: /t.php
+Not Found: /p.php
+Not Found: /3.php
+Not Found: /2.php
+Not Found: /1.php
+Not Found: /probe.php
+Not Found: /check.php
+Not Found: /phptest.php
+Not Found: /diagnostic.php
+Not Found: /serverinfo.php
+Not Found: /phpversion.php
+Not Found: /info3.php
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Not Found: /wp-login.php
+[UID:1147][1566153] Child process with pid: 1566168 was killed by signal: 15, core dumped: no
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/truoprga/virtualenv/doria/3.9/lib/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'www.doria.matokeo.co.ke'. You may need to add 'www.doria.matokeo.co.ke' to ALLOWED_HOSTS.

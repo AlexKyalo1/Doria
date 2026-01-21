@@ -1,0 +1,189 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Welcome Card -->
+    <div class="lg:col-span-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Welcome to DORIA</h2>
+                <p class="text-slate-600 mt-2">
+                    Centralizing security infrastructure and incident data for evidence-based
+                    policing and national security planning.
+                </p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3" />
+                    </svg>
+                    System Operational
+                </span>
+            </div>
+        </div>
+        <div class="mt-4 text-sm text-slate-500">
+            Last updated:
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500">Security Facilities</p>
+                <p class="text-3xl font-bold text-slate-800">{{ facility_count }}</p>
+                <div class="flex items-center mt-1">
+                    <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                    <span class="text-xs text-green-600 font-medium">+2.3%</span>
+                    <span class="text-xs text-slate-500 ml-2">from last month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500">Incidents Recorded</p>
+                <p class="text-3xl font-bold text-slate-800">{{ incident_count }}</p>
+                <div class="flex items-center mt-1">
+                    <svg class="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                    <span class="text-xs text-red-600 font-medium">-1.7%</span>
+                    <span class="text-xs text-slate-500 ml-2">from last month</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Visualization -->
+    <div class="lg:col-span-2 bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-800">National Security Map</h3>
+            <button class="flex items-center px-4 py-2 bg-doria-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                Full View
+            </button>
+        </div>
+        <div class="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg h-64 relative overflow-hidden">
+            <!-- Map Legend -->
+            <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-doria-blue rounded-full mr-3"></div>
+                        <span class="text-sm text-slate-700">Police Stations</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-purple-600 rounded-full mr-3"></div>
+                        <span class="text-sm text-slate-700">DCI Offices</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                        <span class="text-sm text-slate-700">Incident Hotspots</span>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <p class="text-slate-500">Interactive map visualization loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">System Progress</h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="text-slate-700">Map security facilities</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="text-slate-700">Visualize incident hotspots</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    </div>
+                    <span class="text-slate-700">Analyze trends & response times</span>
+                </div>
+                <span class="text-sm font-medium text-blue-600">75%</span>
+            </div>
+            
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center mr-3">
+                        <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+                    </div>
+                    <span class="text-slate-500">AI-assisted predictive policing</span>
+                </div>
+                <span class="text-sm font-medium text-slate-500">Next</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <a href="#" class="flex items-center p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <span class="font-medium text-slate-700">Add Incident</span>
+            </a>
+            
+            <a href="#" class="flex items-center p-4 border border-slate-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors group">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <span class="font-medium text-slate-700">Generate Report</span>
+            </a>
+            
+            <a href="#" class="flex items-center p-4 border border-slate-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors group">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <span class="font-medium text-slate-700">Search Database</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
