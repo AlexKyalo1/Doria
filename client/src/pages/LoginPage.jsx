@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -6,6 +8,7 @@ const LoginPage = () => {
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -13,18 +16,24 @@ const LoginPage = () => {
     setMessage("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/accounts/login/", {
-        method: "POST",
+
+      const res = await fetch("http://127.0.0.1:8000/api/accounts/token/", {
+        method: "POST",        
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ username, password }),
+        
+
       });
 
       const data = await res.json();
 
       if (res.status === 200) {
+        // Store the access token
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);        
+
         setStatus("success");
-        setMessage(`✅ Welcome, ${data.user.username}!`);
+        setMessage(`✅ Login successful!`);
         setUsername("");
         setPassword("");
         setShowModal(true); // show modal on success
@@ -42,10 +51,14 @@ const LoginPage = () => {
   // Auto-close modal after 3 seconds
   useEffect(() => {
     if (showModal) {
-      const timer = setTimeout(() => setShowModal(false), 3000);
+      const timer = setTimeout(() => {
+        setShowModal(false);
+        navigate("/profile");   // 🔥 redirect here
+      }, 3000);
+
       return () => clearTimeout(timer);
     }
-  }, [showModal]);
+  }, [showModal, navigate]);
 
   const getMessageColor = () => {
     if (status === "success") return "#0f5132"; // green

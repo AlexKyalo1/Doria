@@ -1,32 +1,40 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
 import LoginPage from "./pages/LoginPage";
 import RegistrationPage from "./pages/RegistrationPage";
+import ProfilePage from "./pages/ProfilePage";
 import MyPage from "./pages/MyPage";
+import BasePage from "./components/BasePage";
+
+// 🔐 Simple Protected Route
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem("access_token");
+  return token ? children : <Navigate to="/login" />;
+};
 
 function App() {
   return (
     <Router>
-      {/* Navbar */}
-      <nav style={{
-        padding: "15px",
-        backgroundColor: "#0f5132",
-        color: "white",
-        display: "flex",
-        justifyContent: "flex-start",
-        gap: "15px"
-      }}>
-        <Link to="/" style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}>Home</Link>
-        <Link to="/login" style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}>Login</Link>
-        <Link to="/register" style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}>Registration</Link>
-
-      </nav>
-
-      {/* Routes */}
       <Routes>
+
+        {/* Public Routes */}
         <Route path="/" element={<MyPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegistrationPage />} />
+
+        {/* Protected Routes wrapped in BasePage */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <BasePage />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
+
       </Routes>
     </Router>
   );

@@ -14,9 +14,9 @@ from .serializers import UserSerializer
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_api(request):
-    user = request.user
-    serializer = UserSerializer(user)
-    return Response({"user": serializer.data}, status=status.HTTP_200_OK)
+    print(request.headers)  # Check if Authorization header arrives
+    serializer = UserSerializer(request.user)
+    return Response({"user": serializer.data})
 
 
 # Serializer
