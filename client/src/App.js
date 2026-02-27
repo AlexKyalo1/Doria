@@ -4,9 +4,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LoginPage from "./pages/LoginPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import ProfilePage from "./pages/ProfilePage";
+
 import MyPage from "./pages/MyPage";
 import BasePage from "./components/BasePage";
-
+import ProfileEditPage from "./pages/ProfileEditPage";
 // 🔐 Simple Protected Route
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("access_token");
@@ -33,6 +34,7 @@ function App() {
           }
         >
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/update" element={<ProfileEditPage />} />
         </Route>
 
       </Routes>

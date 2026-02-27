@@ -11,6 +11,22 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password
 from .serializers import UserSerializer
 
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def profile_view_api(request):
+    user = request.user
+
+    if request.method == "GET":
+        serializer = UserSerializer(user)
+        return Response({"user": serializer.data})
+
+    if request.method == "PUT":
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"user": serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_api(request):

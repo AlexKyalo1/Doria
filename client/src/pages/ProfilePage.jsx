@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const token = localStorage.getItem("access_token");
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
     const fetchProfile = async () => {
       setStatus("loading");
@@ -50,7 +52,7 @@ const ProfilePage = () => {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      minHeight: "100%",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -326,7 +328,8 @@ const ProfilePage = () => {
                 onMouseLeave={(e) => {
                   e.target.style.backgroundColor = "transparent";
                   e.target.style.color = "#0f5132";
-                }}>
+                }}
+                onClick={() => navigate("/profile/update")} >
                   <span>✏️</span>
                   Edit
                 </button>
