@@ -27,12 +27,16 @@ const BasePage = () => {
           <NavLink to="/profile" style={linkStyle}>
             👤 {sidebarOpen && "Profile"}
           </NavLink>
+          <NavLink to="/profile/update" style={linkStyle}>
+            ✏️ {sidebarOpen && "Edit Profile"}
+          </NavLink>
           <NavLink to="/dashboard" style={linkStyle}>
             📊 {sidebarOpen && "Dashboard"}
           </NavLink>
           <NavLink to="/settings" style={linkStyle}>
             ⚙️ {sidebarOpen && "Settings"}
           </NavLink>
+          
         </nav>
       </div>
 
