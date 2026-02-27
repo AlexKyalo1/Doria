@@ -4,7 +4,7 @@ from .views import  login_api,register_api,profile_api
 urlpatterns = [
     path('login/', login_api),
     path('register/', register_api),
-    path('register/', profile_api),
+    path('profile/', profile_api),
 
 
 ]
