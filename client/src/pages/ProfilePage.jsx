@@ -7,7 +7,7 @@ const ProfilePage = () => {
   const [message, setMessage] = useState("");
   const token = localStorage.getItem("access_token");
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     const fetchProfile = async () => {
       setStatus("loading");
@@ -47,6 +47,7 @@ const ProfilePage = () => {
     lastLogin: user?.last_login ? new Date(user.last_login).toLocaleDateString() : "-",
     first_name: user?.fisrt_name || "-",
     last_name: user?.last_name || "-",
+    phone_number: user?.phone_number || "-",
     // Add more fields as needed
   };
 
@@ -104,7 +105,7 @@ const ProfilePage = () => {
               margin: "4px 0 0 0",
               fontSize: "13px",
               color: "#6b7280"
-            }}>Manage your account details</p>
+            }}>Last login: {userFields.lastLogin}</p>
           </div>
         </div>
 
@@ -262,25 +263,6 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              {/* Last Login */}
-              <div style={{
-                backgroundColor: "#f8faf8",
-                padding: "12px",
-                borderRadius: "10px",
-                border: "1px solid #d0e6d2"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "18px" }}>⏱️</span>
-                  <div>
-                    <p style={{ margin: "0 0 2px 0", fontSize: "10px", color: "#6b7280", textTransform: "uppercase" }}>
-                      Last Login
-                    </p>
-                    <p style={{ margin: 0, fontSize: "13px", color: "#1f2937" }}>
-                      {userFields.lastLogin}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Status Badge and Actions Row */}

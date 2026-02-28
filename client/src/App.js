@@ -6,8 +6,11 @@ import RegistrationPage from "./pages/RegistrationPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import MyPage from "./pages/MyPage";
+import LandingPage from "./pages/LandingPage";
+
 import BasePage from "./components/BasePage";
 import ProfileEditPage from "./pages/ProfileEditPage";
+
 // 🔐 Simple Protected Route
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("access_token");
@@ -20,7 +23,7 @@ function App() {
       <Routes>
 
         {/* Public Routes */}
-        <Route path="/" element={<MyPage />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegistrationPage />} />
 
