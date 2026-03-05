@@ -14,15 +14,46 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "is_active",
+            "is_staff",
+            "is_superuser",
             "date_joined",
             "last_login",
         ]
-        read_only_fields = ["id", "username", "date_joined", "last_login"]
+        read_only_fields = [
+            "id",
+            "username",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "date_joined",
+            "last_login",
+        ]
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    id = HashIdField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "date_joined",
+            "last_login",
+        ]
+        read_only_fields = ["id", "username", "is_superuser", "date_joined", "last_login"]
 
 
 class InstitutionSerializer(serializers.ModelSerializer):
     id = HashIdField(read_only=True)
-    owner_id = HashIdField( read_only=True)
+    owner_id = HashIdField(read_only=True)
 
     class Meta:
         model = Institution
@@ -31,7 +62,7 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
 
 class InstitutionMembershipSerializer(serializers.ModelSerializer):
-    user_id = HashIdField( read_only=True)
+    user_id = HashIdField(read_only=True)
     username = serializers.ReadOnlyField(source="user.username")
 
     class Meta:
@@ -47,4 +78,3 @@ class AddInstitutionMemberSerializer(serializers.Serializer):
         required=False,
         default="member",
     )
-

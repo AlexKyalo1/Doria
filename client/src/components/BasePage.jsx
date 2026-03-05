@@ -9,6 +9,7 @@ const routeTitles = {
   "/institutions": "Institutions",
   "/settings": "Settings",
   "/dashboard": "Dashboard",
+  "/admin/users": "Admin Users",
 };
 
 const BasePage = () => {
@@ -157,6 +158,13 @@ const BasePage = () => {
             <span style={linkIconStyle}>{"\u2699\ufe0f"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Settings</span>}
           </NavLink>
+
+          {Boolean(currentUser?.is_staff) && (
+            <NavLink to="/admin/users" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+              <span style={linkIconStyle}>{"\ud83d\udee0\ufe0f"}</span>
+              {sidebarOpen && <span style={linkTextStyle}>Admin Users</span>}
+            </NavLink>
+          )}
 
           <NavLink to="/institutions" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
             <span style={linkIconStyle}>{"\ud83c\udfdb\ufe0f"}</span>

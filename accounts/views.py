@@ -13,6 +13,7 @@ from utils.hashid import decode_id, encode_id
 from .models import Institution, InstitutionMembership
 from .serializers import (
     AddInstitutionMemberSerializer,
+    AdminUserSerializer,
     InstitutionMembershipSerializer,
     InstitutionSerializer,
     UserSerializer,
@@ -135,6 +136,64 @@ def _can_manage_members(user, institution):
         user=user,
         role="admin",
     ).exists()
+
+
+def _require_site_admin(user):
+    return bool(user and user.is_authenticated and user.is_staff)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_users_collection_api(request):
+    if not _require_site_admin(request.user):
+        return Response({"error": "Admin access required"}, status=status.HTTP_403_FORBIDDEN)
+
+    queryset = User.objects.all().order_by("-date_joined")
+    query = request.query_params.get("q", "").strip()
+    if query:
+        queryset = queryset.filter(username__icontains=query)
+
+    serializer = AdminUserSerializer(queryset, many=True)
+    return Response({"users": serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(["PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def admin_user_detail_api(request, user_id):
+    if not _require_site_admin(request.user):
+        return Response({"error": "Admin access required"}, status=status.HTTP_403_FORBIDDEN)
+
+    target_id = decode_id(user_id)
+    if not target_id:
+        return Response({"error": "Invalid user ID"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        target_user = User.objects.get(id=target_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        if target_user.id == request.user.id:
+            return Response(
+                {"error": "You cannot delete your own account"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target_user.delete()
+        return Response({"message": "User deleted"}, status=status.HTTP_200_OK)
+
+    serializer = AdminUserSerializer(target_user, data=request.data, partial=True)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if target_user.id == request.user.id and serializer.validated_data.get("is_staff") is False:
+        return Response(
+            {"error": "You cannot remove your own staff access"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    serializer.save()
+    return Response({"user": serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST", "GET"])
@@ -299,4 +358,3 @@ def institution_members_list_api(request, institution_id):
         },
         status=status.HTTP_200_OK,
     )
-

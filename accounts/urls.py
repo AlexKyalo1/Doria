@@ -11,6 +11,8 @@ urlpatterns = [
     path("profile/update/", profile_view_api, name="profile"),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("admin/users/", views.admin_users_collection_api),
+    path("admin/users/<str:user_id>/", views.admin_user_detail_api),
     path("institutions/", views.institutions_collection_api),
     path("institutions/<str:institution_id>/", views.institution_detail_api),
     path("institutions/<str:institution_id>/members/", views.institution_members_api),
@@ -23,4 +25,3 @@ urlpatterns = [
         views.institution_member_detail_api,
     ),
 ]
-

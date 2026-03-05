@@ -9,6 +9,8 @@ import LandingPage from "./pages/LandingPage";
 import BasePage from "./components/BasePage";
 import ProfileEditPage from "./pages/ProfileEditPage";
 import SettingsPage from "./pages/SettingsPage";
+import DashboardPage from "./pages/DashboardPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("access_token");
@@ -31,10 +33,13 @@ function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/update" element={<ProfileEditPage />} />
           <Route path="institutions" element={<InstitutionsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="admin/users" element={<AdminUsersPage />} />
         </Route>
       </Routes>
     </Router>
