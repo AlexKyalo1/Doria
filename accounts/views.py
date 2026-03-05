@@ -1,15 +1,23 @@
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status, serializers
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueValidator
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.hashers import make_password
-from .serializers import UserSerializer
+
+from utils.hashid import decode_id, encode_id
+from .models import Institution, InstitutionMembership
+from .serializers import (
+    AddInstitutionMemberSerializer,
+    InstitutionMembershipSerializer,
+    InstitutionSerializer,
+    UserSerializer,
+)
+
 
 @api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
@@ -20,31 +28,29 @@ def profile_view_api(request):
         serializer = UserSerializer(user)
         return Response({"user": serializer.data})
 
-    if request.method == "PUT":
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"user": serializer.data}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer = UserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"user": serializer.data}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def profile_api(request):
-    print(request.headers)  # Check if Authorization header arrives
     serializer = UserSerializer(request.user)
     return Response({"user": serializer.data})
 
 
-# Serializer
 class RegisterSerializer(ModelSerializer):
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
     )
 
     username = serializers.CharField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
     )
 
     password = serializers.CharField(write_only=True, required=True)
@@ -55,27 +61,22 @@ class RegisterSerializer(ModelSerializer):
         fields = ("username", "email", "password", "confirm_password")
 
     def validate(self, data):
-        # Check password match
         if data["password"] != data["confirm_password"]:
             raise serializers.ValidationError({"error": "Passwords do not match"})
 
-        # Validate password strength
         try:
             validate_password(data["password"])
-        except ValidationError as e:
-            raise serializers.ValidationError({"password": list(e.messages)})
+        except ValidationError as exc:
+            raise serializers.ValidationError({"password": list(exc.messages)})
 
         return data
 
     def create(self, validated_data):
         validated_data.pop("confirm_password")
-
-        # Use create_user (automatically hashes password properly)
         user = User.objects.create_user(**validated_data)
         return user
 
 
-# API View
 @api_view(["POST"])
 def register_api(request):
     serializer = RegisterSerializer(data=request.data)
@@ -94,21 +95,208 @@ def register_api(request):
             status=status.HTTP_201_CREATED,
         )
 
-    # Debug: print errors
-    print(serializer.errors)  # <-- this will show exactly why DRF rejects
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def login_api(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-    
+    username = request.data.get("username")
+    password = request.data.get("password")
+
     user = authenticate(request, username=username, password=password)
     if user is not None:
-        # Log the user in (session)
         login(request, user)
         serializer = UserSerializer(user)
         return Response({"message": "Login successful", "user": serializer.data})
-    else:
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    return Response(
+        {"error": "Invalid credentials"},
+        status=status.HTTP_401_UNAUTHORIZED,
+    )
+
+
+def _get_institution_from_hash(institution_hash):
+    institution_id = decode_id(institution_hash)
+    if not institution_id:
+        return None
+
+    try:
+        return Institution.objects.get(id=institution_id)
+    except Institution.DoesNotExist:
+        return None
+
+
+def _can_manage_members(user, institution):
+    if institution.owner_id == user.id:
+        return True
+
+    return InstitutionMembership.objects.filter(
+        institution=institution,
+        user=user,
+        role="admin",
+    ).exists()
+
+
+@api_view(["POST", "GET"])
+@permission_classes([IsAuthenticated])
+def institutions_collection_api(request):
+    if request.method == "POST":
+        serializer = InstitutionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        institution = serializer.save(owner=request.user)
+
+        InstitutionMembership.objects.get_or_create(
+            institution=institution,
+            user=request.user,
+            defaults={"role": "admin"},
+        )
+
+        return Response(
+            {"institution": InstitutionSerializer(institution).data},
+            status=status.HTTP_201_CREATED,
+        )
+
+    institutions = request.user.institutions.select_related("owner").all().distinct()
+    serializer = InstitutionSerializer(institutions, many=True)
+    return Response({"institutions": serializer.data})
+
+
+@api_view(["GET", "PATCH"])
+@permission_classes([IsAuthenticated])
+def institution_detail_api(request, institution_id):
+    institution = _get_institution_from_hash(institution_id)
+    if institution is None:
+        return Response({"error": "Institution not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        serializer = InstitutionSerializer(institution)
+        return Response({"institution": serializer.data})
+
+    if institution.owner_id != request.user.id:
+        return Response(
+            {"error": "Only owner can update"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    serializer = InstitutionSerializer(institution, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"institution": serializer.data})
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def institution_members_api(request, institution_id):
+    institution = _get_institution_from_hash(institution_id)
+    if institution is None:
+        return Response({"error": "Institution not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not _can_manage_members(request.user, institution):
+        return Response(
+            {"error": "Only owner or institution admin can add members"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    serializer = AddInstitutionMemberSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user_id = serializer.validated_data["user_id"]
+    role = serializer.validated_data["role"]
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    membership, created = InstitutionMembership.objects.get_or_create(
+        institution=institution,
+        user=user,
+        defaults={"role": role},
+    )
+
+    if not created:
+        return Response(
+            {
+                "message": "User already a member",
+                "membership": InstitutionMembershipSerializer(membership).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    return Response(
+        {
+            "message": "Member added successfully",
+            "membership": InstitutionMembershipSerializer(membership).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def institution_member_detail_api(request, institution_id, user_id):
+    institution = _get_institution_from_hash(institution_id)
+    if institution is None:
+        return Response({"error": "Institution not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not _can_manage_members(request.user, institution):
+        return Response(
+            {"error": "Only owner or institution admin can remove members"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    member_user_id = decode_id(user_id)
+    if not member_user_id:
+        return Response({"error": "Invalid user ID"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if member_user_id == institution.owner_id:
+        return Response(
+            {"error": "Institution owner cannot be removed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    deleted_count, _ = InstitutionMembership.objects.filter(
+        institution=institution,
+        user_id=member_user_id,
+    ).delete()
+
+    if deleted_count == 0:
+        return Response({"error": "Membership not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({"message": "Member removed"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def institution_members_list_api(request, institution_id):
+    institution = _get_institution_from_hash(institution_id)
+    if institution is None:
+        return Response({"error": "Institution not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not InstitutionMembership.objects.filter(
+        institution=institution,
+        user=request.user,
+    ).exists():
+        return Response(
+            {"error": "Only institution members can view members"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    memberships = InstitutionMembership.objects.filter(institution=institution).select_related(
+        "user"
+    )
+    serializer = InstitutionMembershipSerializer(memberships, many=True)
+
+    return Response(
+        {
+            "institution_id": encode_id(institution.id),
+            "members": serializer.data,
+        },
+        status=status.HTTP_200_OK,
+    )
 
