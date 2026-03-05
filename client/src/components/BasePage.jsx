@@ -1,8 +1,65 @@
-import React, { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+
+import { applyColorMode, getFrontendSettings } from "../utils/frontendSettings";
+
+const routeTitles = {
+  "/profile": "Profile",
+  "/profile/update": "Edit Profile",
+  "/institutions": "Institutions",
+  "/settings": "Settings",
+  "/dashboard": "Dashboard",
+};
 
 const BasePage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [frontendSettings, setFrontendSettings] = useState(getFrontendSettings());
+  const [currentUser, setCurrentUser] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const onSettingsChange = () => setFrontendSettings(getFrontendSettings());
+    window.addEventListener("frontend-settings-changed", onSettingsChange);
+    return () => {
+      window.removeEventListener("frontend-settings-changed", onSettingsChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    applyColorMode(frontendSettings.colorMode);
+  }, [frontendSettings.colorMode]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return;
+    }
+
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/accounts/profile/", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          return;
+        }
+
+        const data = await res.json();
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
+      } catch {
+        // Keep footer fallbacks if profile fetch fails.
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -10,9 +67,73 @@ const BasePage = () => {
     window.location.href = "/";
   };
 
+  const isDark = frontendSettings.colorMode === "dark";
+  const pageTitle = routeTitles[location.pathname] || "Dashboard";
+  const userName =
+    currentUser?.first_name || currentUser?.last_name
+      ? `${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim()
+      : currentUser?.username || "User";
+  const userEmail = currentUser?.email || "No email";
+  const userInitials = (
+    (currentUser?.first_name?.[0] || currentUser?.username?.[0] || "U") +
+    (currentUser?.last_name?.[0] || "")
+  ).toUpperCase();
+
+  const sidebarWidth = sidebarOpen
+    ? frontendSettings.compactSidebar
+      ? "240px"
+      : "280px"
+    : frontendSettings.compactSidebar
+    ? "72px"
+    : "80px";
+
+  const transition = frontendSettings.reducedMotion
+    ? "none"
+    : "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+
+  const dynamicContentStyle = useMemo(
+    () => ({
+      ...contentStyle,
+      padding: frontendSettings.denseContent ? "18px" : "32px",
+      backgroundColor: isDark ? "#0f172a" : "#f0fdf4",
+    }),
+    [frontendSettings.denseContent, isDark]
+  );
+
+  const theme = isDark
+    ? {
+        mainBg: "#0b1220",
+        headerBg: "#0f172a",
+        headerText: "#e5e7eb",
+        headerBorder: "#1f2937",
+        pageTitle: "#e5e7eb",
+        menuBg: "#111827",
+        menuBorder: "#374151",
+        menuColor: "#d1d5db",
+        sidebarGradient: "linear-gradient(180deg, #111827 0%, #0f172a 100%)",
+      }
+    : {
+        mainBg: "#f0fdf4",
+        headerBg: "#ffffff",
+        headerText: "#166534",
+        headerBorder: "#dcfce7",
+        pageTitle: "#0f5132",
+        menuBg: "#f0fdf4",
+        menuBorder: "#bbf7d0",
+        menuColor: "#166534",
+        sidebarGradient: "linear-gradient(180deg, #0f5132 0%, #166534 100%)",
+      };
+
   return (
-    <div style={containerStyle}>
-      <aside style={{ ...sidebarStyle, width: sidebarOpen ? "280px" : "80px" }}>
+    <div style={{ ...containerStyle, backgroundColor: theme.mainBg }}>
+      <aside
+        style={{
+          ...sidebarStyle,
+          width: sidebarWidth,
+          transition,
+          background: theme.sidebarGradient,
+        }}
+      >
         <div style={logoContainerStyle}>
           <div style={logoWrapperStyle}>
             <span style={logoIconStyle}>🌿</span>
@@ -26,7 +147,10 @@ const BasePage = () => {
             {sidebarOpen && <span style={linkTextStyle}>Profile</span>}
           </NavLink>
 
-          <NavLink to="/profile/update" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+          <NavLink
+            to="/profile/update"
+            style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}
+          >
             <span style={linkIconStyle}>✎</span>
             {sidebarOpen && <span style={linkTextStyle}>Edit Profile</span>}
           </NavLink>
@@ -41,7 +165,10 @@ const BasePage = () => {
             {sidebarOpen && <span style={linkTextStyle}>Settings</span>}
           </NavLink>
 
-          <NavLink to="/institutions" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+          <NavLink
+            to="/institutions"
+            style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}
+          >
             <span style={linkIconStyle}>🏛️</span>
             {sidebarOpen && <span style={linkTextStyle}>Institutions</span>}
           </NavLink>
@@ -50,27 +177,38 @@ const BasePage = () => {
         {sidebarOpen && (
           <div style={sidebarFooterStyle}>
             <div style={userInfoStyle}>
-              <span style={userAvatarStyle}>JD</span>
+              <span style={userAvatarStyle}>{userInitials}</span>
               <div style={userDetailsStyle}>
-                <span style={userNameStyle}>John Doe</span>
-                <span style={userEmailStyle}>john@example.com</span>
+                <span style={userNameStyle}>{userName}</span>
+                <span style={userEmailStyle}>{userEmail}</span>
               </div>
             </div>
           </div>
         )}
       </aside>
 
-      <div style={mainContainerStyle}>
-        <header style={headerStyle}>
+      <div style={{ ...mainContainerStyle, backgroundColor: theme.mainBg }}>
+        <header
+          style={{
+            ...headerStyle,
+            backgroundColor: theme.headerBg,
+            borderBottom: `1px solid ${theme.headerBorder}`,
+          }}
+        >
           <div style={headerLeftStyle}>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={menuButtonStyle}
+              style={{
+                ...menuButtonStyle,
+                backgroundColor: theme.menuBg,
+                border: `1px solid ${theme.menuBorder}`,
+                color: theme.menuColor,
+              }}
               aria-label="Toggle sidebar"
             >
               {sidebarOpen ? "◀" : "▶"}
             </button>
-            <span style={pageTitleStyle}>Dashboard</span>
+            <span style={{ ...pageTitleStyle, color: theme.pageTitle }}>{pageTitle}</span>
           </div>
 
           <button
@@ -90,7 +228,7 @@ const BasePage = () => {
           </button>
         </header>
 
-        <main style={contentStyle}>
+        <main style={dynamicContentStyle}>
           <div style={contentWrapperStyle}>
             <Outlet />
           </div>
@@ -100,7 +238,6 @@ const BasePage = () => {
   );
 };
 
-// Updated Styles with Green Theme
 const containerStyle = {
   display: "flex",
   height: "100vh",
@@ -108,9 +245,7 @@ const containerStyle = {
 };
 
 const sidebarStyle = {
-  background: "linear-gradient(180deg, #0f5132 0%, #166534 100%)",
   color: "white",
-  transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   paddingTop: "24px",
   display: "flex",
   flexDirection: "column",
@@ -247,18 +382,15 @@ const mainContainerStyle = {
   flex: 1,
   display: "flex",
   flexDirection: "column",
-  backgroundColor: "#f0fdf4", // Very light green background
 };
 
 const headerStyle = {
   height: "80px",
-  backgroundColor: "white",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   padding: "0 32px",
   boxShadow: "0 2px 8px rgba(15, 81, 50, 0.08)",
-  borderBottom: "1px solid #dcfce7",
 };
 
 const headerLeftStyle = {
@@ -272,7 +404,6 @@ const menuButtonStyle = {
   border: "none",
   fontSize: "20px",
   cursor: "pointer",
-  color: "#166534",
   padding: "8px 12px",
   borderRadius: "10px",
   transition: "all 0.2s",
@@ -281,14 +412,11 @@ const menuButtonStyle = {
   justifyContent: "center",
   width: "40px",
   height: "40px",
-  backgroundColor: "#f0fdf4",
-  border: "1px solid #bbf7d0",
 };
 
 const pageTitleStyle = {
   fontSize: "24px",
   fontWeight: "600",
-  color: "#0f5132",
   letterSpacing: "-0.5px",
 };
 
@@ -314,7 +442,6 @@ const logoutIconStyle = {
 
 const contentStyle = {
   flex: 1,
-  padding: "32px",
   overflowY: "auto",
 };
 
