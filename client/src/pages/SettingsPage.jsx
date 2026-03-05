@@ -1,41 +1,44 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+
 import {
   applyColorMode,
   defaultFrontendSettings,
   getFrontendSettings,
   saveFrontendSettings,
 } from "../utils/frontendSettings";
+import { useColorMode } from "../utils/useColorMode";
 
 const settingRows = [
   {
     key: "compactSidebar",
     title: "Compact sidebar",
     description: "Use smaller sidebar width",
-    icon: "📏",
+    icon: "\ud83d\udccf",
   },
   {
     key: "reducedMotion",
     title: "Reduced motion",
     description: "Turn off UI animations",
-    icon: "🎬",
+    icon: "\ud83c\udfac",
   },
   {
     key: "denseContent",
     title: "Dense content",
     description: "Use tighter spacing",
-    icon: "📦",
+    icon: "\ud83d\udce6",
   },
   {
     key: "showInstitutionIds",
     title: "Show institution IDs",
     description: "Display HashIDs in lists",
-    icon: "🆔",
+    icon: "\ud83c\udd94",
   },
 ];
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState(getFrontendSettings());
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
+  const { isDark, theme } = useColorMode();
 
   useEffect(() => {
     if (alert.show) {
@@ -57,7 +60,7 @@ const SettingsPage = () => {
     };
     setSettings(newSettings);
     saveFrontendSettings(newSettings);
-    showAlert(`${settingRows.find(r => r.key === key).title} updated`, "success");
+    showAlert(`${settingRows.find((r) => r.key === key).title} updated`, "success");
   };
 
   const handleModeChange = (mode) => {
@@ -82,8 +85,6 @@ const SettingsPage = () => {
     setAlert({ show: false, type: "", message: "" });
   };
 
-  const isDark = settings.colorMode === "dark";
-
   const getAlertStyles = () => {
     const baseStyles = { ...styles.alert };
     switch (alert.type) {
@@ -97,22 +98,14 @@ const SettingsPage = () => {
   };
 
   return (
-    <div style={styles.page}>
-      {/* Pop-up Alert */}
+    <div style={{ ...styles.page, backgroundColor: theme.pageBg }}>
       {alert.show && (
         <div style={getAlertStyles()} role="alert">
           <div style={styles.alertContent}>
-            <span style={styles.alertIcon}>
-              {alert.type === "success" && "✓"}
-              {alert.type === "info" && "ℹ"}
-            </span>
+            <span style={styles.alertIcon}>{alert.type === "success" ? "\u2713" : "\u2139"}</span>
             <span style={styles.alertMessage}>{alert.message}</span>
-            <button 
-              style={styles.alertClose} 
-              onClick={handleDismissAlert}
-              aria-label="Close alert"
-            >
-              ✕
+            <button style={styles.alertClose} onClick={handleDismissAlert} aria-label="Close alert">
+              {"\u00d7"}
             </button>
           </div>
           <div style={styles.alertProgress}></div>
@@ -121,15 +114,14 @@ const SettingsPage = () => {
 
       <div style={styles.header}>
         <div style={styles.headerContent}>
-          <h1 style={styles.title}>Settings</h1>
+          <h1 style={{ ...styles.title, color: theme.text }}>Settings</h1>
         </div>
       </div>
 
-      {/* Color Mode */}
-      <div style={styles.modeCard}>
+      <div style={{ ...styles.modeCard, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <div style={styles.modeRow}>
-          <span style={styles.modeIcon}>{isDark ? "🌙" : "☀️"}</span>
-          <span style={styles.modeLabel}>Color Mode</span>
+          <span style={styles.modeIcon}>{isDark ? "\ud83c\udf19" : "\u2600\ufe0f"}</span>
+          <span style={{ ...styles.modeLabel, color: theme.text }}>Color Mode</span>
           <div style={styles.modeButtons}>
             <button
               type="button"
@@ -155,15 +147,14 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Settings Grid */}
       <div style={styles.grid}>
         {settingRows.map((row) => (
-          <div key={row.key} style={styles.settingItem}>
+          <div key={row.key} style={{ ...styles.settingItem, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <div style={styles.settingContent}>
               <span style={styles.settingIcon}>{row.icon}</span>
               <div style={styles.settingInfo}>
-                <div style={styles.settingTitle}>{row.title}</div>
-                <div style={styles.settingDescription}>{row.description}</div>
+                <div style={{ ...styles.settingTitle, color: theme.text }}>{row.title}</div>
+                <div style={{ ...styles.settingDescription, color: theme.mutedText }}>{row.description}</div>
               </div>
               <label style={styles.toggle}>
                 <input
@@ -172,13 +163,13 @@ const SettingsPage = () => {
                   onChange={() => handleToggle(row.key)}
                   style={styles.checkbox}
                 />
-                <span 
+                <span
                   style={{
                     ...styles.toggleSlider,
                     backgroundColor: settings[row.key] ? "#0f5132" : "#cbd5e1",
                   }}
                 >
-                  <span 
+                  <span
                     style={{
                       ...styles.toggleKnob,
                       transform: settings[row.key] ? "translateX(18px)" : "translateX(0)",
@@ -191,10 +182,9 @@ const SettingsPage = () => {
         ))}
       </div>
 
-      {/* Reset Button */}
       <div style={styles.footer}>
         <button type="button" style={styles.resetButton} onClick={handleReset}>
-          <span style={styles.buttonIcon}>↺</span>
+          <span style={styles.buttonIcon}>{"\u21ba"}</span>
           Restore Defaults
         </button>
       </div>
@@ -211,10 +201,8 @@ const styles = {
     maxWidth: "800px",
     margin: "0 auto",
     position: "relative",
-    backgroundColor: "#ffffff",
     minHeight: "100vh",
   },
-  // Alert Styles
   alert: {
     position: "fixed",
     top: "16px",
@@ -225,7 +213,6 @@ const styles = {
     borderRadius: "8px",
     padding: "10px 12px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    animation: "slideInRight 0.2s ease, fadeOut 0.2s ease 1.8s",
     overflow: "hidden",
   },
   alertSuccess: {
@@ -287,11 +274,8 @@ const styles = {
     margin: 0,
     fontSize: "24px",
     fontWeight: "600",
-    color: "#0f5132",
   },
-  // Color Mode
   modeCard: {
-    backgroundColor: "#f8fafc",
     border: "1px solid #e2e8f0",
     borderRadius: "10px",
     padding: "10px 12px",
@@ -316,7 +300,6 @@ const styles = {
   modeLabel: {
     fontSize: "14px",
     fontWeight: "500",
-    color: "#1e293b",
     flex: 1,
   },
   modeButtons: {
@@ -340,14 +323,12 @@ const styles = {
     borderColor: "#0f5132",
     color: "#ffffff",
   },
-  // Settings Grid
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
     gap: "8px",
   },
   settingItem: {
-    backgroundColor: "#ffffff",
     border: "1px solid #e2e8f0",
     borderRadius: "10px",
     padding: "10px",
@@ -374,15 +355,12 @@ const styles = {
   settingTitle: {
     fontSize: "14px",
     fontWeight: "600",
-    color: "#1e293b",
     marginBottom: "2px",
   },
   settingDescription: {
     fontSize: "11px",
-    color: "#64748b",
     lineHeight: "1.4",
   },
-  // Toggle Switch - Compact
   toggle: {
     position: "relative",
     display: "inline-block",
@@ -418,7 +396,6 @@ const styles = {
     boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
     left: "2px",
   },
-  // Footer
   footer: {
     display: "flex",
     justifyContent: "center",
@@ -443,35 +420,5 @@ const styles = {
     fontSize: "14px",
   },
 };
-
-// Add keyframe animations
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  @keyframes fadeOut {
-    from {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    to {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-  }
-  @keyframes progress {
-    from { width: 100%; }
-    to { width: 0%; }
-  }
-`;
-document.head.appendChild(styleSheet);
 
 export default SettingsPage;

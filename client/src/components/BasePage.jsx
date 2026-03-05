@@ -84,12 +84,10 @@ const BasePage = () => {
       ? "240px"
       : "280px"
     : frontendSettings.compactSidebar
-    ? "72px"
-    : "80px";
+      ? "72px"
+      : "80px";
 
-  const transition = frontendSettings.reducedMotion
-    ? "none"
-    : "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+  const transition = frontendSettings.reducedMotion ? "none" : "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
 
   const dynamicContentStyle = useMemo(
     () => ({
@@ -104,7 +102,6 @@ const BasePage = () => {
     ? {
         mainBg: "#0b1220",
         headerBg: "#0f172a",
-        headerText: "#e5e7eb",
         headerBorder: "#1f2937",
         pageTitle: "#e5e7eb",
         menuBg: "#111827",
@@ -115,7 +112,6 @@ const BasePage = () => {
     : {
         mainBg: "#f0fdf4",
         headerBg: "#ffffff",
-        headerText: "#166534",
         headerBorder: "#dcfce7",
         pageTitle: "#0f5132",
         menuBg: "#f0fdf4",
@@ -136,40 +132,34 @@ const BasePage = () => {
       >
         <div style={logoContainerStyle}>
           <div style={logoWrapperStyle}>
-            <span style={logoIconStyle}>🌿</span>
+            <span style={logoIconStyle}>{"\ud83c\udf3f"}</span>
             {sidebarOpen && <span style={logoTextStyle}>Doria</span>}
           </div>
         </div>
 
         <nav style={navStyle}>
           <NavLink to="/profile" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>👤</span>
+            <span style={linkIconStyle}>{"\ud83d\udc64"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Profile</span>}
           </NavLink>
 
-          <NavLink
-            to="/profile/update"
-            style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}
-          >
-            <span style={linkIconStyle}>✎</span>
+          <NavLink to="/profile/update" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            <span style={linkIconStyle}>{"\u270e"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Edit Profile</span>}
           </NavLink>
 
           <NavLink to="/dashboard" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>📊</span>
+            <span style={linkIconStyle}>{"\ud83d\udcca"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Dashboard</span>}
           </NavLink>
 
           <NavLink to="/settings" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>⚙️</span>
+            <span style={linkIconStyle}>{"\u2699\ufe0f"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Settings</span>}
           </NavLink>
 
-          <NavLink
-            to="/institutions"
-            style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}
-          >
-            <span style={linkIconStyle}>🏛️</span>
+          <NavLink to="/institutions" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            <span style={linkIconStyle}>{"\ud83c\udfdb\ufe0f"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Institutions</span>}
           </NavLink>
         </nav>
@@ -206,7 +196,7 @@ const BasePage = () => {
               }}
               aria-label="Toggle sidebar"
             >
-              {sidebarOpen ? "◀" : "▶"}
+              {sidebarOpen ? "\u25c0" : "\u25b6"}
             </button>
             <span style={{ ...pageTitleStyle, color: theme.pageTitle }}>{pageTitle}</span>
           </div>
@@ -223,7 +213,7 @@ const BasePage = () => {
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span style={logoutIconStyle}>🚪</span>
+            <span style={logoutIconStyle}>{"\ud83d\udeaa"}</span>
             Logout
           </button>
         </header>

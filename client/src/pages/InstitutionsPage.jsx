@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getFrontendSettings } from "../utils/frontendSettings";
+import { useColorMode } from "../utils/useColorMode";
 
 const API_BASE = "http://127.0.0.1:8000/api/accounts";
 
 const InstitutionsPage = () => {
   const token = localStorage.getItem("access_token");
+  const { theme } = useColorMode();
 
   const [institutions, setInstitutions] = useState([]);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
@@ -231,46 +233,44 @@ const InstitutionsPage = () => {
   };
 
   return (
-    <div style={styles.page}>
+    <div style={{ ...styles.page, backgroundColor: theme.pageBg }}>
       {/* Pop-up Alert */}
       {alert.show && (
         <div style={getAlertStyles()} role="alert">
           <div style={styles.alertContent}>
             <span style={styles.alertIcon}>
-              {alert.type === "success" && "✓"}
-              {alert.type === "error" && "⚠"}
+              {alert.type === "success" && "\u2713"}
+              {alert.type === "error" && "\u26a0\ufe0f"}
               {alert.type === "warning" && "!"}
-              {alert.type === "info" && "ℹ"}
+              {alert.type === "info" && "\u2139\ufe0f"}
             </span>
             <span style={styles.alertMessage}>{alert.message}</span>
             <button 
               style={styles.alertClose} 
               onClick={handleDismissAlert}
               aria-label="Close alert"
-            >
-              ✕
-            </button>
+            > {"\u00d7"}</button>
           </div>
           <div style={styles.alertProgress}></div>
         </div>
       )}
 
       <div style={styles.headerRow}>
-        <h1 style={styles.title}>Institutions</h1>
+        <h1 style={{ ...styles.title, color: theme.text }}>Institutions</h1>
         <div style={styles.headerActions}>
           <button 
             onClick={fetchInstitutions} 
             style={styles.refreshButton}
             disabled={status === "loading"}
           >
-            <span style={styles.buttonIcon}>↻</span>
+            <span style={styles.buttonIcon}>{"\u21bb"}</span>
             {status === "loading" ? "Loading..." : "Refresh"}
           </button>
         </div>
       </div>
 
       <div style={styles.grid}>
-        <section style={styles.card}>
+        <section style={{ ...styles.card, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>Create Institution</h2>
           </div>
@@ -304,7 +304,7 @@ const InstitutionsPage = () => {
           </form>
         </section>
 
-        <section style={styles.card}>
+        <section style={{ ...styles.card, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>My Institutions</h2>
             <span style={styles.badge}>{institutions.length}</span>
@@ -341,7 +341,7 @@ const InstitutionsPage = () => {
                   )}
                 </div>
                 {selectedInstitutionId === institution.id && (
-                  <span style={styles.checkIcon}>✓</span>
+                  <span style={styles.checkIcon}>{"\u2713"}</span>
                 )}
               </button>
             ))}
@@ -349,7 +349,7 @@ const InstitutionsPage = () => {
         </section>
       </div>
 
-      <section style={styles.card}>
+      <section style={{ ...styles.card, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <div style={styles.cardHeader}>
           <h2 style={styles.cardTitle}>Members</h2>
           {selectedInstitution && (
@@ -440,10 +440,7 @@ const InstitutionsPage = () => {
                                 type="button"
                                 style={styles.iconButton}
                                 onClick={() => handleRemoveMember(member.user_id)}
-                                title="Remove member"
-                              >
-                                ✕
-                              </button>
+                                title="Remove member"> {"\u00d7"}</button>
                             </td>
                           </tr>
                         ))}
@@ -878,3 +875,6 @@ styleSheet.textContent = `
 document.head.appendChild(styleSheet);
 
 export default InstitutionsPage;
+
+
+
