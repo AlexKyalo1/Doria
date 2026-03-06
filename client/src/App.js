@@ -11,6 +11,8 @@ import ProfileEditPage from "./pages/ProfileEditPage";
 import SettingsPage from "./pages/SettingsPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import FacilitiesPage from "./pages/FacilitiesPage";
+import FacilitiesMapPage from "./pages/FacilitiesMapPage";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("access_token");
@@ -38,6 +40,8 @@ function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/update" element={<ProfileEditPage />} />
           <Route path="institutions" element={<InstitutionsPage />} />
+          <Route path="facilities" element={<FacilitiesPage />} />
+          <Route path="facilities/map" element={<FacilitiesMapPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="admin/users" element={<AdminUsersPage />} />
         </Route>

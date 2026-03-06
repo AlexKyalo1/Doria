@@ -7,6 +7,8 @@ const routeTitles = {
   "/profile": "Profile",
   "/profile/update": "Edit Profile",
   "/institutions": "Institutions",
+  "/facilities": "Facilities",
+  "/facilities/map": "Facility Map",
   "/settings": "Settings",
   "/dashboard": "Dashboard",
   "/admin/users": "Admin Users",
@@ -169,6 +171,14 @@ const BasePage = () => {
           <NavLink to="/institutions" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
             <span style={linkIconStyle}>{"\ud83c\udfdb\ufe0f"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Institutions</span>}
+          </NavLink>
+          <NavLink to="/facilities" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            <span style={linkIconStyle}>{"\ud83d\udccd"}</span>
+            {sidebarOpen && <span style={linkTextStyle}>Facilities</span>}
+          </NavLink>
+          <NavLink to="/facilities/map" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            <span style={linkIconStyle}>{"\ud83d\uddfa\ufe0f"}</span>
+            {sidebarOpen && <span style={linkTextStyle}>Facility Map</span>}
           </NavLink>
         </nav>
 
