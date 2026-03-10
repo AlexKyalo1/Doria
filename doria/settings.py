@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wa&6#6zm1_pw%f5dy2r^7#u*ju519ov_vjyij1n&3n0mo9%*5$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["doria.matokeo.co.ke","127.0.0.1"]
+ALLOWED_HOSTS = ["doria.matokeo.co.ke","127.0.0.1","localhost"]
 
 
 # Application definition

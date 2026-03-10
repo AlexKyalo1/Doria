@@ -111,6 +111,8 @@ const FacilitiesPage = () => {
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placesReady, setPlacesReady] = useState(false);
   const [placesError, setPlacesError] = useState("");
+  const selectingRef = useRef(false);
+  const suppressNextSearchRef = useRef(false);
   const autocompleteServiceRef = useRef(null);
   const placesServiceRef = useRef(null);
 
@@ -233,7 +235,7 @@ const FacilitiesPage = () => {
     setInstitutions(list);
 
     if (list.length > 0) {
-      const defaultInstitution = selectedInstitutionId || list[0].id;
+      const defaultInstitution = selectedInstitutionId ? String(selectedInstitutionId) : String(list[0].id);
       setSelectedInstitutionId(defaultInstitution);
       setFacilityForm((prev) => ({ ...prev, institution_id: prev.institution_id || defaultInstitution }));
     }
@@ -246,7 +248,8 @@ const FacilitiesPage = () => {
       throw new Error(getErrorMessage(data, "Failed to load facilities"));
     }
 
-    setFacilities(data.facilities || []);
+    const list = Array.isArray(data) ? data.filter(Boolean) : Array.isArray(data.facilities) ? data.facilities.filter(Boolean) : [];
+    setFacilities(list);
   };
 
   useEffect(() => {
@@ -318,7 +321,13 @@ const FacilitiesPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
   useEffect(() => {
-    if (!placesReady || !autocompleteServiceRef.current) {
+    if (!placesReady || !autocompleteServiceRef.current || selectingRef.current) {
+      setPlaceSuggestions([]);
+      return;
+    }
+
+    if (suppressNextSearchRef.current) {
+      suppressNextSearchRef.current = false;
       setPlaceSuggestions([]);
       return;
     }
@@ -359,11 +368,11 @@ const FacilitiesPage = () => {
   }, [facilityForm.county, subCountyByCounty]);
 
   const filteredFacilities = useMemo(() => {
+    const list = facilities.filter(Boolean);
     if (!selectedInstitutionId) {
-      return facilities;
+      return list;
     }
-
-    return facilities.filter((facility) => facility.institution_id === selectedInstitutionId);
+    return list.filter((facility) => facility.institution_id == null || String(facility.institution_id) === String(selectedInstitutionId));
   }, [facilities, selectedInstitutionId]);
 
   const previewCenter = useMemo(() => {
@@ -384,7 +393,7 @@ const FacilitiesPage = () => {
     return { lat, lng };
   }, [facilityForm.latitude, facilityForm.longitude]);
 
-  const manageableCount = useMemo(() => facilities.filter((item) => item.active).length, [facilities]);
+  const manageableCount = useMemo(() => facilities.filter(Boolean).filter((item) => item.active).length, [facilities]);
 
   const handleCountyChange = (value) => {
     setFacilityForm((prev) => ({ ...prev, county: value, sub_county: "" }));
@@ -396,16 +405,19 @@ const FacilitiesPage = () => {
       return;
     }
 
-    setPlaceLoading(true);
+    selectingRef.current = true;
+    suppressNextSearchRef.current = true;
+    setPlaceSuggestions([]); // Close dropdown immediately
+    setPlaceLoading(false);
     placesServiceRef.current.getDetails(
       {
         placeId: suggestion.place_id,
         fields: ["geometry", "formatted_address", "address_components"],
       },
       (place, status) => {
-        setPlaceLoading(false);
         if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) {
           setPlacesError("Could not fetch selected place details.");
+          selectingRef.current = false;
           return;
         }
 
@@ -432,13 +444,47 @@ const FacilitiesPage = () => {
           sub_county: subCountyCandidate || prev.sub_county,
         }));
 
-        setPlaceQuery(place.formatted_address || suggestion.description || "");
-        setPlaceSuggestions([]);
+        setPlaceQuery(suggestion.description || "");
         setPlacesError("");
+        selectingRef.current = false;
       }
     );
   };
 
+  
+  const deleteFacility = async (facility) => {
+    if (!facility?.id) {
+      showBanner("error", "Missing facility id.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete facility "${facility.name}"? This cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${SECURITY_API}/facilities/${facility.id}/`, {
+        method: "DELETE",
+        headers,
+      });
+
+      if (!res.ok) {
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (error) {
+          data = null;
+        }
+        throw new Error(getErrorMessage(data, "Failed to delete facility"));
+      }
+
+      setFacilities((prev) => prev.filter((item) => item?.id !== facility.id));
+      showBanner("success", "Facility deleted successfully.");
+    } catch (error) {
+      showBanner("error", error.message || "Failed to delete facility");
+    }
+  };
   const createFacility = async (event) => {
     event.preventDefault();
 
@@ -458,6 +504,11 @@ const FacilitiesPage = () => {
       return;
     }
 
+    if (!payload.latitude || !payload.longitude) {
+      showBanner("error", "Set the location using the map or place search.");
+      return;
+    }
+
     try {
       const res = await fetch(`${SECURITY_API}/facilities/`, {
         method: "POST",
@@ -470,7 +521,12 @@ const FacilitiesPage = () => {
         throw new Error(getErrorMessage(data, "Failed to create facility"));
       }
 
-      setFacilities((prev) => [data.facility, ...prev]);
+      const createdFacility = data?.facility || (data?.id ? data : null);
+      if (createdFacility) {
+        setFacilities((prev) => [createdFacility, ...prev].filter(Boolean));
+      } else {
+        await loadFacilities();
+      }
       setFacilityForm((prev) => ({ ...defaultFacilityForm, institution_id: payload.institution_id }));
       setCustomSubCounty("");
       setPlaceQuery("");
@@ -547,138 +603,145 @@ const FacilitiesPage = () => {
           >
             <option value="">Select institution</option>
             {institutions.map((institution) => (
-              <option key={institution.id} value={institution.id}>
+              <option key={institution.id} value={String(institution.id)}>
                 {institution.name}
               </option>
             ))}
           </select>
 
-          <label style={styles.label}>Facility Name</label>
-          <input
-            style={styles.input}
-            placeholder="Example: Embakasi Police Station"
-            value={facilityForm.name}
-            onChange={(event) => setFacilityForm((prev) => ({ ...prev, name: event.target.value }))}
-            required
-          />
-          <label style={styles.label}>Suggested Place Search</label>
-          <div style={styles.autocompleteWrap}>
-            <input
-              style={styles.input}
-              placeholder="Type place name, road, landmark..."
-              value={placeQuery}
-              onChange={(event) => setPlaceQuery(event.target.value)}
-              autoComplete="off"
-            />
-            {(placeLoading || placeSuggestions.length > 0) && (
-              <div style={styles.autocompleteList}>
-                {placeLoading && <div style={styles.autocompleteItemMuted}>Searching places...</div>}
-                {!placeLoading &&
-                  placeSuggestions.map((suggestion) => (
-                    <button
-                      key={`${suggestion.place_id}`}
-                      type="button"
-                      style={styles.autocompleteItem}
-                      onClick={() => handlePlaceSuggestionSelect(suggestion)}
-                    >
-                      <span style={styles.autocompletePrimary}>{suggestion.description}</span>
-                    </button>
-                  ))}
+          <div style={styles.formContainer}>
+            <div style={styles.formFields}>
+              <label style={styles.label}>Facility Name</label>
+              <input
+                style={styles.input}
+                placeholder="Example: Embakasi Police Station"
+                value={facilityForm.name}
+                onChange={(event) => setFacilityForm((prev) => ({ ...prev, name: event.target.value }))}
+                required
+              />
+
+              <label style={styles.label}>Suggested Place Search</label>
+              <div style={styles.autocompleteWrap}>
+                <input
+                  style={styles.input}
+                  placeholder="Type place name, road, landmark..."
+                  value={placeQuery}
+                  onChange={(event) => setPlaceQuery(event.target.value)}
+                  autoComplete="off"
+                />
+                {(placeLoading || placeSuggestions.length > 0) && (
+                  <div style={styles.autocompleteList}>
+                    {placeLoading && <div style={styles.autocompleteItemMuted}>Searching places...</div>}
+                    {!placeLoading &&
+                      placeSuggestions.map((suggestion) => (
+                        <button
+                          key={`${suggestion.place_id}`}
+                          type="button"
+                          style={styles.autocompleteItem}
+                          onClick={() => handlePlaceSuggestionSelect(suggestion)}
+                        >
+                          <span style={styles.autocompletePrimary}>{suggestion.description}</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {placesError && <p style={styles.errorHint}>{placesError}</p>}
+              {placesError && <p style={styles.errorHint}>{placesError}</p>}
 
-          <label style={styles.label}>Facility Type</label>
-          <select
-            style={styles.input}
-            value={facilityForm.facility_type}
-            onChange={(event) => setFacilityForm((prev) => ({ ...prev, facility_type: event.target.value }))}
-            required
-          >
-            <option value="police_station">Police Station</option>
-            <option value="police_post">Police Post</option>
-            <option value="dci">DCI Office</option>
-            <option value="administration">Administration Police</option>
-          </select>
-
-          <div style={styles.row}>
-            <div>
-              <label style={styles.label}>County</label>
+              <label style={styles.label}>Facility Type</label>
               <select
                 style={styles.input}
-                value={facilityForm.county}
-                onChange={(event) => handleCountyChange(event.target.value)}
+                value={facilityForm.facility_type}
+                onChange={(event) => setFacilityForm((prev) => ({ ...prev, facility_type: event.target.value }))}
                 required
               >
-                <option value="">Select county</option>
-                {counties.map((county) => (
-                  <option key={county} value={county}>
-                    {county}
-                  </option>
-                ))}
+                <option value="police_station">Police Station</option>
+                <option value="police_post">Police Post</option>
+                <option value="dci">DCI Office</option>
+                <option value="administration">Administration Police</option>
               </select>
-            </div>
 
-            <div>
-              <label style={styles.label}>Sub-county</label>
-              <select
-                style={styles.input}
-                value={facilityForm.sub_county}
-                onChange={(event) => setFacilityForm((prev) => ({ ...prev, sub_county: event.target.value }))}
-                disabled={!facilityForm.county}
-              >
-                <option value="">Select sub-county</option>
-                {subCountyOptions.map((subCounty) => (
-                  <option key={subCounty} value={subCounty}>
-                    {subCounty}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+              <div style={styles.row}>
+                <div>
+                  <label style={styles.label}>County</label>
+                  <select
+                    style={styles.input}
+                    value={facilityForm.county}
+                    onChange={(event) => handleCountyChange(event.target.value)}
+                    required
+                  >
+                    <option value="">Select county</option>
+                    {counties.map((county) => (
+                      <option key={county} value={county}>
+                        {county}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          <label style={styles.label}>Custom Sub-county (Optional)</label>
-          <input
-            style={styles.input}
-            placeholder="Use this if the sub-county is not in list"
-            value={customSubCounty}
-            onChange={(event) => setCustomSubCounty(event.target.value)}
-          />
+                <div>
+                  <label style={styles.label}>Sub-county</label>
+                  <select
+                    style={styles.input}
+                    value={facilityForm.sub_county}
+                    onChange={(event) => setFacilityForm((prev) => ({ ...prev, sub_county: event.target.value }))}
+                    disabled={!facilityForm.county}
+                  >
+                    <option value="">Select sub-county</option>
+                    {subCountyOptions.map((subCounty) => (
+                      <option key={subCounty} value={subCounty}>
+                        {subCounty}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-          <div style={styles.row}>
-            <div>
-              <label style={styles.label}>Latitude</label>
+              <label style={styles.label}>Custom Sub-county (Optional)</label>
               <input
                 style={styles.input}
-                placeholder="-1.286389"
-                value={facilityForm.latitude}
-                onChange={(event) => setFacilityForm((prev) => ({ ...prev, latitude: event.target.value }))}
-                required
+                placeholder="Use this if the sub-county is not in list"
+                value={customSubCounty}
+                onChange={(event) => setCustomSubCounty(event.target.value)}
               />
-            </div>
-            <div>
-              <label style={styles.label}>Longitude</label>
-              <input
-                style={styles.input}
-                placeholder="36.817223"
-                value={facilityForm.longitude}
-                onChange={(event) => setFacilityForm((prev) => ({ ...prev, longitude: event.target.value }))}
-                required
-              />
-            </div>
-          </div>
 
-          <label style={styles.label}>Location Preview</label>
-          <div style={{ ...styles.mapWrap, height: "260px" }}>
-            <FacilityPreviewMap
-              ready={googleMapsReady}
-              center={previewCenter}
-              selectedPosition={selectedPosition}
-              onPick={setCoordinates}
-            />
+              <div style={{ ...styles.row, display: 'none' }}>
+                <div>
+                  <label style={styles.label}>Latitude</label>
+                  <input
+                    style={styles.input}
+                    placeholder="-1.286389"
+                    value={facilityForm.latitude}
+                    onChange={(event) => setFacilityForm((prev) => ({ ...prev, latitude: event.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={styles.label}>Longitude</label>
+                  <input
+                    style={styles.input}
+                    placeholder="36.817223"
+                    value={facilityForm.longitude}
+                    onChange={(event) => setFacilityForm((prev) => ({ ...prev, longitude: event.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.mapSection}>
+              <label style={styles.label}>Location Preview</label>
+              <div style={{ ...styles.mapWrap, height: "400px" }}>
+                <FacilityPreviewMap
+                  ready={googleMapsReady}
+                  center={previewCenter}
+                  selectedPosition={selectedPosition}
+                  onPick={setCoordinates}
+                />
+              </div>
+              <p style={styles.mapHint}>Tip: click map to set precise coordinates.</p>
+            </div>
           </div>
-          <p style={styles.mapHint}>Tip: click map to set precise coordinates.</p>
 
           <button type="submit" style={styles.primaryButton}>Save Facility</button>
         </form>
@@ -694,7 +757,7 @@ const FacilitiesPage = () => {
           >
             <option value="">All institutions</option>
             {institutions.map((institution) => (
-              <option key={institution.id} value={institution.id}>
+              <option key={institution.id} value={String(institution.id)}>
                 {institution.name}
               </option>
             ))}
@@ -714,7 +777,7 @@ const FacilitiesPage = () => {
                   <th style={styles.th}>Type</th>
                   <th style={styles.th}>County</th>
                   <th style={styles.th}>Sub-county</th>
-                  <th style={styles.th}>Coordinates</th>
+                  <th style={styles.th}>Coordinates</th>\r\n                  <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -725,6 +788,15 @@ const FacilitiesPage = () => {
                     <td style={styles.td}>{facility.county}</td>
                     <td style={styles.td}>{facility.sub_county || "-"}</td>
                     <td style={styles.td}>{facility.latitude}, {facility.longitude}</td>
+                    <td style={styles.td}>
+                      <button
+                        type="button"
+                        style={styles.deleteButton}
+                        onClick={() => deleteFacility(facility)}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -856,6 +928,25 @@ const styles = {
     flexDirection: "column",
     gap: "8px",
   },
+  formContainer: {
+    display: "flex",
+    gap: "20px",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+  },
+  formFields: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  mapSection: {
+    flex: 1,
+    minWidth: "300px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
   label: {
     fontSize: "12px",
     fontWeight: 600,
@@ -925,6 +1016,16 @@ const styles = {
     fontWeight: 700,
     cursor: "pointer",
   },
+  deleteButton: {
+    border: "1px solid #fecaca",
+    backgroundColor: "#fee2e2",
+    color: "#991b1b",
+    borderRadius: "8px",
+    padding: "6px 10px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
   listHeader: {
     display: "flex",
     alignItems: "center",
@@ -966,6 +1067,29 @@ const styles = {
 };
 
 export default FacilitiesPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

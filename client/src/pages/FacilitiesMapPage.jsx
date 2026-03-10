@@ -235,7 +235,7 @@ const FacilitiesMapPage = () => {
     setInstitutions(list);
 
     if (list.length > 0) {
-      setSelectedInstitutionId((prev) => prev || list[0].id);
+      setSelectedInstitutionId((prev) => (prev ? String(prev) : String(list[0].id)));
     }
   };
 
@@ -246,7 +246,8 @@ const FacilitiesMapPage = () => {
       throw new Error(getErrorMessage(data, "Failed to load facilities"));
     }
 
-    setFacilities(data.facilities || []);
+    const list = Array.isArray(data) ? data.filter(Boolean) : Array.isArray(data.facilities) ? data.facilities.filter(Boolean) : [];
+    setFacilities(list);
   };
 
   useEffect(() => {
@@ -302,10 +303,11 @@ const FacilitiesMapPage = () => {
   }, [token]);
 
   const filteredFacilities = useMemo(() => {
+    const list = facilities.filter(Boolean);
     if (!selectedInstitutionId) {
-      return facilities;
+      return list;
     }
-    return facilities.filter((facility) => facility.institution_id === selectedInstitutionId);
+    return list.filter((facility) => facility.institution_id == null || String(facility.institution_id) === String(selectedInstitutionId));
   }, [facilities, selectedInstitutionId]);
 
   const mappableFacilities = useMemo(
@@ -432,7 +434,7 @@ const FacilitiesMapPage = () => {
           >
             <option value="">All Institutions</option>
             {institutions.map((institution) => (
-              <option key={institution.id} value={institution.id}>
+              <option key={institution.id} value={String(institution.id)}>
                 {institution.name}
               </option>
             ))}
@@ -883,6 +885,12 @@ const styles = {
 };
 
 export default FacilitiesMapPage;
+
+
+
+
+
+
 
 
 
