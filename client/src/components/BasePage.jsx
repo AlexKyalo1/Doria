@@ -9,6 +9,7 @@ const routeTitles = {
   "/institutions": "Institutions",
   "/facilities": "Facilities",
   "/facilities/map": "Facility Map",
+  "/incidents": "Incidents",
   "/settings": "Settings",
   "/dashboard": "Dashboard",
   "/admin/users": "Admin Users",
@@ -179,6 +180,10 @@ const BasePage = () => {
           <NavLink to="/facilities/map" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
             <span style={linkIconStyle}>{"\ud83d\uddfa\ufe0f"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Facility Map</span>}
+          </NavLink>
+          <NavLink to="/incidents" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            <span style={linkIconStyle}>{"\ud83d\udea8"}</span>
+            {sidebarOpen && <span style={linkTextStyle}>Incidents</span>}
           </NavLink>
         </nav>
 
@@ -460,3 +465,7 @@ const contentWrapperStyle = {
 };
 
 export default BasePage;
+
+
+
+
