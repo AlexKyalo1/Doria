@@ -12,6 +12,7 @@ class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
         fields = "__all__"
+        read_only_fields = ("follow_up_by", "follow_up_at")
 
     def validate(self, attrs):
 

@@ -1,7 +1,9 @@
 # incidents/models.py
+from django.conf import settings
 from django.db import models
-from security.models import SecurityFacility
 from accounts.models import Institution
+from security.models import SecurityFacility
+
 
 class Incident(models.Model):
     INCIDENT_TYPES = [
@@ -23,7 +25,20 @@ class Incident(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     occurred_at = models.DateTimeField()
     reported_at = models.DateTimeField(auto_now_add=True)
+    follow_up_status = models.CharField(
+        max_length=20,
+        choices=[("open", "Open"), ("in_progress", "In Progress"), ("resolved", "Resolved")],
+        default="open",
+    )
+    follow_up_note = models.TextField(blank=True, default="")
+    follow_up_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="incident_followups",
+    )
+    follow_up_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.incident_type} - {self.ob_number}"
-

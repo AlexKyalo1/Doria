@@ -426,7 +426,7 @@ const FacilitiesDistanceMap = ({
                 <div>
                   <div style="font-weight:700; color: #1f2937; font-size: 16px;">${escapeHtml(incident.incident_type || "Unknown")}</div>
                   <div style="font-size:12px; color: #6b7280;">OB: ${escapeHtml(incident.ob_number || "-")}</div>
-                  ${(incident.facility_name || incident.facility) ? `<div style="font-size:12px; color: #6b7280; margin-top: 2px;">Facility: ${escapeHtml(incident.facility_name || incident.facility)}</div>` : ""}
+                  ${facilityName ? `<div style="font-size:12px; color: #6b7280; margin-top: 2px;">Facility: ${escapeHtml(facilityName)}</div>` : ""}
                 </div>
               </div>
             </div>
@@ -437,6 +437,19 @@ const FacilitiesDistanceMap = ({
                   ${escapeHtml(incident.description || "No description")}
                 </div>
               </div>
+              ${(incident.follow_up_note || incident.follow_up_status) ? `
+                <div style="margin-bottom: 12px;">
+                  <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Follow-up</div>
+                  <div style="font-size: 13px; background: #f0f9ff; padding: 8px; border-radius: 6px;">
+                    <div><strong>Status:</strong> ${escapeHtml(incident.follow_up_status || "open")}</div>
+                    ${incident.follow_up_note ? `<div style="margin-top: 4px;">${escapeHtml(incident.follow_up_note)}</div>` : ""}
+                    ${(incident.follow_up_by_name || incident.follow_up_at) ? `<div style="margin-top: 6px; font-size: 11px; color: #6b7280;">
+                      ${incident.follow_up_by_name ? `By ${escapeHtml(incident.follow_up_by_name)}` : ""}
+                      ${incident.follow_up_at ? ` • ${escapeHtml(new Date(incident.follow_up_at).toLocaleString())}` : ""}
+                    </div>` : ""}
+                  </div>
+                </div>
+              ` : ""}
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <div>
                   <div style="font-size: 11px; color: #6b7280;">Occurred</div>
@@ -471,7 +484,7 @@ const FacilitiesDistanceMap = ({
     });
 
     markerEntriesRef.current = entries;
-  }, [facilities, incidents, onMarkerSelect, markerIcon, incidentMarkerIcon, showFacilityInfo, showDistanceFeedback]);
+  }, [facilities, incidents, onMarkerSelect, markerIcon, incidentMarkerIcon, showFacilityInfo, showDistanceFeedback, facilityById]);
 
   useEffect(() => {
     if (!window.google?.maps) return;
@@ -1285,5 +1298,3 @@ const styles = {
 };
 
 export default FacilitiesMapPage;
-
-
