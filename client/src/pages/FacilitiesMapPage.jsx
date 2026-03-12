@@ -35,7 +35,7 @@ const escapeHtml = (value) =>
 
 const getFacilityTypeIcon = (type) => {
   const icons = {
-    police_station: "🚔",
+    police_station: "🚓",
     police_post: "👮",
     dci: "🕵️",
     administration: "🏛️",
@@ -89,13 +89,12 @@ const FacilitiesDistanceMap = ({
   incidents,
   fromId,
   toId,
-  selectedFacilityId,
   onMarkerSelect,
   isDark,
   distanceKm,
   distanceFrom,
   distanceTo,
-  interactionMode,
+  facilityById,
 }) => {
   const hostRef = useRef(null);
   const mapRef = useRef(null);
@@ -111,22 +110,18 @@ const FacilitiesDistanceMap = ({
     const facilityId = facility?.id;
     const isFrom = facilityId === fromId;
     const isTo = facilityId === toId;
-    const isSelected = facilityId === selectedFacilityId;
     const typeKey = facility?.facility_type || "default";
     const colors = getFacilityTypeColor(typeKey);
 
     let scale = 12;
     let strokeWeight = 2;
     
-    if (isSelected) {
-      scale = 24;
-      strokeWeight = 4;
-    } else if (isFrom || isTo) {
+    if (isFrom || isTo) {
       scale = 20;
       strokeWeight = 3;
     }
 
-    const pulsingEffect = (isSelected || isFrom || isTo) ? 
+    const pulsingEffect = (isFrom || isTo) ? 
       '<circle cx="12" cy="12" r="16" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3">' +
       '<animate attributeName="r" values="16;20;16" dur="1.5s" repeatCount="indefinite" />' +
       '<animate attributeName="opacity" values="0.3;0.1;0.3" dur="1.5s" repeatCount="indefinite" />' +
@@ -142,7 +137,7 @@ const FacilitiesDistanceMap = ({
         ${pulsingEffect}
         <g filter="url(#shadow)">
           <circle cx="24" cy="24" r="${scale}" fill="${colors.primary}" 
-            stroke="${isSelected ? '#dc2626' : isFrom ? '#2563eb' : isTo ? '#7c3aed' : colors.secondary}" 
+            stroke="${isFrom ? '#2563eb' : isTo ? '#7c3aed' : colors.secondary}" 
             stroke-width="${strokeWeight}" />
           <text x="24" y="24" text-anchor="middle" dy=".3em" fill="white" 
             font-size="${scale * 0.6}" font-weight="bold" font-family="Arial, sans-serif">
@@ -157,7 +152,7 @@ const FacilitiesDistanceMap = ({
       scaledSize: new window.google.maps.Size(48, 48),
       anchor: new window.google.maps.Point(24, 24),
     };
-  }, [fromId, toId, selectedFacilityId]);
+  }, [fromId, toId]);
 
   const incidentMarkerIcon = useCallback((incident) => {
     const severity = incident?.severity || 'medium';
@@ -180,7 +175,7 @@ const FacilitiesDistanceMap = ({
           <circle cx="20" cy="22" r="2" fill="white">
             <animate attributeName="r" values="2;3;2" dur="1s" repeatCount="indefinite" />
           </circle>
-          <text x="20" y="28" text-anchor="middle" fill="white" font-size="12" font-weight="bold">!</text>
+          <text x="20" y="28" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚠️</text>
         </g>
       </svg>
     `;
@@ -195,7 +190,7 @@ const FacilitiesDistanceMap = ({
   const showFacilityInfo = useCallback((facility, marker) => {
     if (!clickInfoRef.current) {
       clickInfoRef.current = new window.google.maps.InfoWindow({
-        maxWidth: 350,
+        maxWidth: 240,
       });
     }
     
@@ -205,44 +200,25 @@ const FacilitiesDistanceMap = ({
       : "";
     
     const details = `
-      <div style="font-family: system-ui, -apple-system, sans-serif;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-          <div style="background: ${colors.primary}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">
+      <div style="font-family: system-ui, -apple-system, sans-serif; padding: 6px 4px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="background: ${colors.primary}; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
             ${getFacilityTypeIcon(facility.facility_type)}
           </div>
           <div>
-            <div style="font-weight:700; color: #1f2937;">${escapeHtml(facility.name)}</div>
-            <div style="font-size:12px; color: #6b7280;">${escapeHtml(typeLabel)}</div>
+            <div style="font-weight:700; color: #1f2937; font-size: 13px;">${escapeHtml(facility.name)}</div>
+            <div style="font-size:11px; color: #6b7280;">${escapeHtml(typeLabel)}</div>
           </div>
         </div>
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <div style="font-size: 11px; color: #6b7280;">County</div>
-              <div style="font-size: 13px; font-weight: 500;">${escapeHtml(facility.county)}</div>
-            </div>
-            <div>
-              <div style="font-size: 11px; color: #6b7280;">Sub-county</div>
-              <div style="font-size: 13px; font-weight: 500;">${escapeHtml(facility.sub_county || "-")}</div>
-            </div>
-          </div>
-          <div style="margin-top: 12px; background: #f9fafb; padding: 8px; border-radius: 6px;">
-            <div style="font-size: 11px; color: #6b7280;">Status</div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${facility.active ? '#10b981' : '#ef4444'};"></span>
-              <span style="font-size: 13px; font-weight: 500;">${facility.active ? 'Active' : 'Inactive'}</span>
-            </div>
-          </div>
-          <div style="margin-top: 12px; background: #f9fafb; padding: 8px; border-radius: 6px;">
-            <div style="font-size: 11px; color: #6b7280;">Coordinates</div>
-            <div style="font-family: monospace; font-size: 12px; color: #1f2937; margin-top: 4px;">
-              ${escapeHtml(facility.latitude)}, ${escapeHtml(facility.longitude)}
-            </div>
-          </div>
+        <div style="margin-top: 8px; font-size: 11px; color: #4b5563;">
+          ${escapeHtml(facility.county)} • ${escapeHtml(facility.sub_county || "-")}
+        </div>
+        <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${facility.active ? '#10b981' : '#ef4444'};"></span>
+          <span style="font-size: 11px; font-weight: 600; color: #374151;">${facility.active ? 'ACTIVE' : 'INACTIVE'}</span>
         </div>
       </div>
-    `;
-    
+    `;    
     clickInfoRef.current.setContent(details);
     clickInfoRef.current.open({ map: mapRef.current, anchor: marker });
   }, []);
@@ -251,7 +227,7 @@ const FacilitiesDistanceMap = ({
     const feedbackWindow = new window.google.maps.InfoWindow({
       content: `
         <div style="padding: 4px 8px; background: #10b981; color: white; border-radius: 4px; font-size: 12px;">
-          ✅ Selected for distance
+          📍 Selected for distance
         </div>
       `,
       pixelOffset: new window.google.maps.Size(0, -30)
@@ -334,9 +310,7 @@ const FacilitiesDistanceMap = ({
               ${escapeHtml(facility.facility_type?.replace('_', ' ').toUpperCase() || 'FACILITY')}
             </div>
             <div style="font-size: 11px; color: #6b7280; margin-top: 6px; border-top: 1px solid #e5e7eb; padding-top: 4px;">
-              ${interactionMode === 'distance' 
-                ? '👆 Single-click: Select for distance | 👆👆 Double-click: Show details' 
-                : '👆 Single-click: Show details | 👆👆 Double-click: Show details'}
+              🔍 Single-click: Select for distance | 👆 Double-click: Show details
             </div>
           </div>
         `;
@@ -359,28 +333,22 @@ const FacilitiesDistanceMap = ({
         lastClickMarkerIdRef.current = facility.id;
 
         if (isDoubleClick) {
-          // Double-click: always show info window
+          // Double-click: show compact info window
           showFacilityInfo(facility, marker);
           lastClickTimeRef.current = 0;
           lastClickMarkerIdRef.current = null;
         } else {
-          // Single click: handle based on mode
-          if (interactionMode === 'distance') {
-            // Distance mode: select for distance calculation (NO info window)
-            onMarkerSelect(facility);
-            
-            if (clickInfoRef.current) {
-              clickInfoRef.current.close();
-            }
-            if (hoverInfoRef.current) {
-              hoverInfoRef.current.close();
-            }
-            
-            showDistanceFeedback(marker);
-          } else {
-            // Info mode: show details on single click
-            showFacilityInfo(facility, marker);
+          // Single click: select for distance calculation (no info window)
+          onMarkerSelect(facility);
+
+          if (clickInfoRef.current) {
+            clickInfoRef.current.close();
           }
+          if (hoverInfoRef.current) {
+            hoverInfoRef.current.close();
+          }
+
+          showDistanceFeedback(marker);
         }
       });
 
@@ -413,7 +381,7 @@ const FacilitiesDistanceMap = ({
               Severity: ${incident.severity || 'medium'}
             </div>
             <div style="font-size: 11px; color: #6b7280; margin-top: 6px;">
-              👆 Click for details
+              🔍 Click for details
             </div>
           </div>
         `;
@@ -434,6 +402,15 @@ const FacilitiesDistanceMap = ({
           });
         }
         
+        const facilityIdValue = incident.facility_id ?? incident.facility;
+        const facilityFromMap = facilityById && facilityIdValue != null
+          ? facilityById.get(String(facilityIdValue))
+          : null;
+        const facilityName =
+          incident.facility_name ||
+          (typeof incident.facility === "string" ? incident.facility : null) ||
+          facilityFromMap?.name ||
+          null;
         const severity = incident.severity || 'medium';
         const severityColors = {
           high: '#dc2626',
@@ -449,6 +426,7 @@ const FacilitiesDistanceMap = ({
                 <div>
                   <div style="font-weight:700; color: #1f2937; font-size: 16px;">${escapeHtml(incident.incident_type || "Unknown")}</div>
                   <div style="font-size:12px; color: #6b7280;">OB: ${escapeHtml(incident.ob_number || "-")}</div>
+                  ${(incident.facility_name || incident.facility) ? `<div style="font-size:12px; color: #6b7280; margin-top: 2px;">Facility: ${escapeHtml(incident.facility_name || incident.facility)}</div>` : ""}
                 </div>
               </div>
             </div>
@@ -493,7 +471,7 @@ const FacilitiesDistanceMap = ({
     });
 
     markerEntriesRef.current = entries;
-  }, [facilities, incidents, onMarkerSelect, markerIcon, incidentMarkerIcon, showFacilityInfo, showDistanceFeedback, interactionMode]);
+  }, [facilities, incidents, onMarkerSelect, markerIcon, incidentMarkerIcon, showFacilityInfo, showDistanceFeedback]);
 
   useEffect(() => {
     if (!window.google?.maps) return;
@@ -506,7 +484,7 @@ const FacilitiesDistanceMap = ({
       };
       entry.marker.setIcon(markerIcon(facility));
     });
-  }, [fromId, toId, selectedFacilityId, markerIcon]);
+  }, [fromId, toId, markerIcon]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google?.maps) return;
@@ -603,13 +581,12 @@ const FacilitiesMapPage = () => {
   const [facilities, setFacilities] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
-  const [selectedFacility, setSelectedFacility] = useState(null);
   const [distanceForm, setDistanceForm] = useState({ from_id: "", to_id: "" });
   const [distanceResult, setDistanceResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState({ type: "", text: "" });
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
-  const [interactionMode, setInteractionMode] = useState('distance');
+
 
   const headers = useMemo(
     () => ({
@@ -810,7 +787,6 @@ const FacilitiesMapPage = () => {
   }, [mappableFacilities]);
 
   const handleMarkerSelect = (facility) => {
-    setSelectedFacility(facility);
     setDistanceResult(null);
     setDistanceForm((prev) => {
       if (!prev.from_id || (prev.from_id && prev.to_id)) {
@@ -888,37 +864,11 @@ const FacilitiesMapPage = () => {
         </div>
 
         <div style={styles.headerControls}>
-          <div style={styles.modeToggle}>
-            <button
-              style={{
-                ...styles.modeButton,
-                ...(interactionMode === 'distance' ? styles.modeButtonActive : {})
-              }}
-              onClick={() => setInteractionMode('distance')}
-            >
-              <span style={styles.modeIcon}>📏</span>
-              <span>Distance Mode</span>
-              <span style={styles.modeHint}>Single-click to select</span>
-            </button>
-            <button
-              style={{
-                ...styles.modeButton,
-                ...(interactionMode === 'info' ? styles.modeButtonActive : {})
-              }}
-              onClick={() => setInteractionMode('info')}
-            >
-              <span style={styles.modeIcon}>ℹ️</span>
-              <span>Info Mode</span>
-              <span style={styles.modeHint}>Single-click for details</span>
-            </button>
-          </div>
-
           <select
             style={styles.filterSelect}
             value={selectedInstitutionId}
             onChange={(event) => {
               setSelectedInstitutionId(event.target.value);
-              setSelectedFacility(null);
               setDistanceResult(null);
               setDistanceForm({ from_id: "", to_id: "" });
             }}
@@ -935,8 +885,8 @@ const FacilitiesMapPage = () => {
 
       <div style={styles.instructionsBanner}>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>👆</span>
-          <span><strong>Single-click:</strong> {interactionMode === 'distance' ? 'Select facility for distance' : 'Show facility details'}</span>
+          <span style={styles.instructionIcon}>🔍</span>
+          <span><strong>Single-click:</strong> Select facility for distance</span>
         </div>
         <div style={styles.instructionItem}>
           <span style={styles.instructionIcon}>👆👆</span>
@@ -944,11 +894,11 @@ const FacilitiesMapPage = () => {
         </div>
         <div style={styles.instructionDivider}>|</div>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>📍</span>
+          <span style={styles.instructionIcon}>📌</span>
           <span>From: {fromFacility?.name || 'Not selected'}</span>
         </div>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>🎯</span>
+          <span style={styles.instructionIcon}>📍</span>
           <span>To: {toFacility?.name || 'Not selected'}</span>
         </div>
       </div>
@@ -958,7 +908,7 @@ const FacilitiesMapPage = () => {
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{mappableFacilities.length}</div>
-          <div style={styles.statLabel}>📍 Facilities on Map</div>
+          <div style={styles.statLabel}>🏢 Facilities on Map</div>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{mappableIncidents.length}</div>
@@ -966,7 +916,7 @@ const FacilitiesMapPage = () => {
         </div>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{filteredFacilities.length - mappableFacilities.length}</div>
-          <div style={styles.statLabel}>❓ Missing Coordinates</div>
+          <div style={styles.statLabel}>❌ Missing Coordinates</div>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{filteredFacilities.filter((f) => f.active).length}</div>
@@ -998,32 +948,25 @@ const FacilitiesMapPage = () => {
           incidents={mappableIncidents}
           fromId={distanceForm.from_id}
           toId={distanceForm.to_id}
-          selectedFacilityId={selectedFacility?.id}
           onMarkerSelect={handleMarkerSelect}
           isDark={isDark}
           distanceKm={distanceResult?.distance_km}
           distanceFrom={fromFacility}
           distanceTo={toFacility}
-          interactionMode={interactionMode}
+          facilityById={facilityById}
         />
       </section>
 
       <section style={styles.card}>
         <div style={styles.cardHeader}>
           <h2 style={styles.cardTitle}>📏 Distance Calculator</h2>
-          <div style={styles.cardBadge}>
-            {interactionMode === 'distance' ? '👆 Click markers to select' : 'ℹ️ Switch to Distance Mode to select'}
-          </div>
+          <div style={styles.cardBadge}>Click markers to select</div>
         </div>
-        <p style={styles.hint}>
-          {interactionMode === 'distance' 
-            ? '💡 Click two markers in sequence (first for From, second for To), or use dropdowns below.'
-            : '💡 Switch to Distance Mode to select facilities for distance calculation.'}
-        </p>
+        <p style={styles.hint}>Click two markers in sequence (first for From, second for To), or use dropdowns below.</p>
         <form onSubmit={calculateDistance} style={styles.formGrid}>
           <div>
             <label style={styles.label}>
-              <span style={styles.labelIcon}>📍</span> From
+              <span style={styles.labelIcon}>📌</span> From
             </label>
             <select
               style={styles.input}
@@ -1041,7 +984,7 @@ const FacilitiesMapPage = () => {
           </div>
           <div>
             <label style={styles.label}>
-              <span style={styles.labelIcon}>🎯</span> To
+              <span style={styles.labelIcon}>📍</span> To
             </label>
             <select
               style={styles.input}
@@ -1076,57 +1019,6 @@ const FacilitiesMapPage = () => {
           </div>
         )}
       </section>
-
-      {selectedFacility && (
-        <div style={styles.bottomSheet}>
-          <div style={styles.sheetHandle} />
-          <div style={styles.sheetHeader}>
-            <div style={styles.modalTitle}>
-              <span style={styles.modalIcon}>{getFacilityTypeIcon(selectedFacility.facility_type)}</span>
-              <h3 style={styles.modalName}>{selectedFacility.name}</h3>
-            </div>
-            <button style={styles.modalClose} onClick={() => setSelectedFacility(null)}>
-              ✕
-            </button>
-          </div>
-
-          <div style={styles.modalBody}>
-            <div style={styles.modalGrid}>
-              <div style={styles.modalItem}>
-                <span style={styles.modalLabel}>Type</span>
-                <span style={styles.modalValue}>{selectedFacility.facility_type.replace("_", " ").toUpperCase()}</span>
-              </div>
-              <div style={styles.modalItem}>
-                <span style={styles.modalLabel}>County</span>
-                <span style={styles.modalValue}>{selectedFacility.county}</span>
-              </div>
-              <div style={styles.modalItem}>
-                <span style={styles.modalLabel}>Sub-county</span>
-                <span style={styles.modalValue}>{selectedFacility.sub_county || "-"}</span>
-              </div>
-              <div style={styles.modalItem}>
-                <span style={styles.modalLabel}>Status</span>
-                <span
-                  style={{
-                    ...styles.statusBadge,
-                    backgroundColor: selectedFacility.active ? "#10b981" : "#ef4444",
-                  }}
-                >
-                  {selectedFacility.active ? "ACTIVE" : "INACTIVE"}
-                </span>
-              </div>
-            </div>
-
-            <div style={styles.modalCoordinates}>
-              <div style={styles.modalLabel}>Coordinates</div>
-              <div style={styles.coordBox}>
-                <span>Lat: {selectedFacility.latitude}</span>
-                <span>Lng: {selectedFacility.longitude}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -1173,41 +1065,7 @@ const styles = {
     alignItems: "center",
     flexWrap: "wrap",
   },
-  modeToggle: {
-    display: "flex",
-    gap: "4px",
-    backgroundColor: "#f1f5f9",
-    padding: "4px",
-    borderRadius: "12px",
-  },
-  modeButton: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    border: "none",
-    backgroundColor: "transparent",
-    cursor: "pointer",
-    fontSize: "13px",
-    fontWeight: "500",
-    transition: "all 0.2s",
-    minWidth: "120px",
-  },
-  modeButtonActive: {
-    backgroundColor: "white",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    color: "#2563eb",
-  },
-  modeIcon: {
-    fontSize: "18px",
-    marginBottom: "2px",
-  },
-  modeHint: {
-    fontSize: "10px",
-    opacity: 0.7,
-    marginTop: "2px",
-  },
+
   instructionsBanner: {
     display: "flex",
     alignItems: "center",
@@ -1423,113 +1281,9 @@ const styles = {
     fontSize: "13px",
     opacity: 0.8,
   },
-  bottomSheet: {
-    position: "fixed",
-    left: "50%",
-    transform: "translateX(-50%)",
-    bottom: "12px",
-    width: "min(920px, calc(100% - 24px))",
-    backgroundColor: "white",
-    borderRadius: "18px",
-    boxShadow: "0 20px 45px rgba(2, 6, 23, 0.28)",
-    border: "1px solid #dbeafe",
-    zIndex: 2000,
-    animation: "slideUp 0.25s ease-out",
-    overflow: "hidden",
-  },
-  sheetHandle: {
-    width: "60px",
-    height: "6px",
-    borderRadius: "999px",
-    backgroundColor: "#cbd5e1",
-    margin: "10px auto 4px",
-  },
-  sheetHeader: {
-    padding: "10px 20px 14px",
-    borderBottom: "1px solid #e2e8f0",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modalTitle: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  modalIcon: {
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "#0f172a",
-    minWidth: "30px",
-  },
-  modalName: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: "600",
-    color: "#0f172a",
-  },
-  modalClose: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    border: "none",
-    backgroundColor: "#f1f5f9",
-    color: "#475569",
-    fontSize: "18px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "backgroundColor 0.2s",
-  },
-  modalBody: {
-    padding: "24px",
-  },
-  modalGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "20px",
-    marginBottom: "24px",
-  },
-  modalItem: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-  modalLabel: {
-    fontSize: "11px",
-    fontWeight: "600",
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  modalValue: {
-    fontSize: "15px",
-    fontWeight: "500",
-    color: "#0f172a",
-  },
-  statusBadge: {
-    display: "inline-block",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    color: "white",
-    fontSize: "12px",
-    fontWeight: "600",
-    letterSpacing: "0.5px",
-  },
-  modalCoordinates: {
-    backgroundColor: "#f8fafc",
-    borderRadius: "12px",
-    padding: "16px",
-  },
-  coordBox: {
-    display: "flex",
-    gap: "16px",
-    marginTop: "8px",
-    fontFamily: "monospace",
-    fontSize: "13px",
-    color: "#0f172a",
-  },
+
 };
 
 export default FacilitiesMapPage;
+
+
