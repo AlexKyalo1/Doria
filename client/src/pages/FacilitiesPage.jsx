@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
 
 const ACCOUNTS_API = "http://127.0.0.1:8000/api/accounts";
 const SECURITY_API = "http://127.0.0.1:8000/api/security";
@@ -111,6 +112,13 @@ const FacilitiesPage = () => {
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placesReady, setPlacesReady] = useState(false);
   const [placesError, setPlacesError] = useState("");
+  const [facilityMemberFacility, setFacilityMemberFacility] = useState(null);
+  const [facilityMembers, setFacilityMembers] = useState([]);
+  const [facilityMembersLoading, setFacilityMembersLoading] = useState(false);
+  const [facilityMembersError, setFacilityMembersError] = useState("");
+  const [facilityMemberUserId, setFacilityMemberUserId] = useState("");
+  const [facilityMemberRole, setFacilityMemberRole] = useState("member");
+  const [facilityMemberMessage, setFacilityMemberMessage] = useState("");
   const selectingRef = useRef(false);
   const suppressNextSearchRef = useRef(false);
   const autocompleteServiceRef = useRef(null);
@@ -128,6 +136,94 @@ const FacilitiesPage = () => {
 
   const showBanner = (type, text) => {
     setBanner({ type, text });
+  };
+  const loadFacilityMembers = async (facility) => {
+    if (!facility?.id) return;
+    setFacilityMembersLoading(true);
+    setFacilityMembersError("");
+    try {
+      const res = await apiFetch(`${ACCOUNTS_API}/facilities/${facility.id}/members/list/`, {
+        headers,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data, "Failed to load facility members"));
+      }
+      setFacilityMembers(Array.isArray(data.members) ? data.members : []);
+    } catch (error) {
+      setFacilityMembersError(error.message || "Failed to load facility members");
+    } finally {
+      setFacilityMembersLoading(false);
+    }
+  };
+
+  const openFacilityMembers = async (facility) => {
+    setFacilityMemberFacility(facility);
+    setFacilityMembers([]);
+    setFacilityMemberUserId("");
+    setFacilityMemberRole("member");
+    setFacilityMemberMessage("");
+    await loadFacilityMembers(facility);
+  };
+
+  const closeFacilityMembers = () => {
+    setFacilityMemberFacility(null);
+    setFacilityMembers([]);
+    setFacilityMembersError("");
+    setFacilityMemberMessage("");
+    setFacilityMembersLoading(false);
+  };
+
+  const addFacilityMember = async () => {
+    if (!facilityMemberFacility?.id || !facilityMemberUserId) {
+      setFacilityMemberMessage("User ID is required");
+      return;
+    }
+    setFacilityMemberMessage("Saving...");
+    try {
+      const res = await apiFetch(
+        `${ACCOUNTS_API}/facilities/${facilityMemberFacility.id}/members/`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            user_id: facilityMemberUserId.trim(),
+            role: facilityMemberRole,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data, "Failed to add member"));
+      }
+      setFacilityMemberMessage("Member saved");
+      setFacilityMemberUserId("");
+      await loadFacilityMembers(facilityMemberFacility);
+    } catch (error) {
+      setFacilityMemberMessage(error.message || "Failed to add member");
+    }
+  };
+
+  const removeFacilityMember = async (member) => {
+    if (!facilityMemberFacility?.id || !member?.user_id) return;
+    setFacilityMemberMessage("Removing...");
+    try {
+      const res = await apiFetch(
+        `${ACCOUNTS_API}/facilities/${facilityMemberFacility.id}/members/${member.user_id}/`,
+        {
+          method: "DELETE",
+          headers,
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data, "Failed to remove member"));
+      }
+      setFacilityMemberMessage("Member removed");
+      await loadFacilityMembers(facilityMemberFacility);
+    } catch (error) {
+      setFacilityMemberMessage(error.message || "Failed to remove member");
+    }
   };
 
   const setCoordinates = (lat, lng) => {
@@ -201,7 +297,7 @@ const FacilitiesPage = () => {
   };
 
   const loadAdminGeography = async () => {
-    const res = await fetch(KENYA_ADMIN_CSV);
+    const res = await apiFetch(KENYA_ADMIN_CSV);
     if (!res.ok) {
       throw new Error("Failed to load counties and sub-counties CSV");
     }
@@ -213,7 +309,7 @@ const FacilitiesPage = () => {
   };
 
   const loadProfile = async () => {
-    const res = await fetch(`${ACCOUNTS_API}/profile/`, { headers });
+    const res = await apiFetch(`${ACCOUNTS_API}/profile/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load profile"));
@@ -225,7 +321,7 @@ const FacilitiesPage = () => {
 
   const loadInstitutions = async (user) => {
     const scope = user?.is_staff ? "?scope=all" : "";
-    const res = await fetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
+    const res = await apiFetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load institutions"));
@@ -242,7 +338,7 @@ const FacilitiesPage = () => {
   };
 
   const loadFacilities = async () => {
-    const res = await fetch(`${SECURITY_API}/facilities/`, { headers });
+    const res = await apiFetch(`${SECURITY_API}/facilities/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load facilities"));
@@ -367,13 +463,31 @@ const FacilitiesPage = () => {
     return subCountyByCounty[facilityForm.county] || [];
   }, [facilityForm.county, subCountyByCounty]);
 
+  const allowedInstitutionIds = useMemo(() => {
+    return new Set(institutions.map((institution) => String(institution.id)));
+  }, [institutions]);
+
   const filteredFacilities = useMemo(() => {
     const list = facilities.filter(Boolean);
+    const scoped = list.filter((facility) => {
+      const facilityInstitutionId = facility.institution_id;
+      if (!isAdmin) {
+        if (!facilityInstitutionId) return false;
+        return allowedInstitutionIds.has(String(facilityInstitutionId));
+      }
+      return true;
+    });
+
     if (!selectedInstitutionId) {
-      return list;
+      return scoped;
     }
-    return list.filter((facility) => facility.institution_id == null || String(facility.institution_id) === String(selectedInstitutionId));
-  }, [facilities, selectedInstitutionId]);
+
+    return scoped.filter((facility) =>
+      facility.institution_id == null ||
+      String(facility.institution_id) === String(selectedInstitutionId)
+    );
+  }, [facilities, selectedInstitutionId, isAdmin, allowedInstitutionIds]);
+
 
   const previewCenter = useMemo(() => {
     const lat = parseCoord(facilityForm.latitude);
@@ -464,7 +578,7 @@ const FacilitiesPage = () => {
     }
 
     try {
-      const res = await fetch(`${SECURITY_API}/facilities/${facility.id}/`, {
+      const res = await apiFetch(`${SECURITY_API}/facilities/${facility.id}/`, {
         method: "DELETE",
         headers,
       });
@@ -510,7 +624,7 @@ const FacilitiesPage = () => {
     }
 
     try {
-      const res = await fetch(`${SECURITY_API}/facilities/`, {
+      const res = await apiFetch(`${SECURITY_API}/facilities/`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
@@ -755,7 +869,7 @@ const FacilitiesPage = () => {
             value={selectedInstitutionId}
             onChange={(event) => setSelectedInstitutionId(event.target.value)}
           >
-            <option value="">All institutions</option>
+            {isAdmin && <option value="">All institutions</option>}
             {institutions.map((institution) => (
               <option key={institution.id} value={String(institution.id)}>
                 {institution.name}
@@ -777,7 +891,8 @@ const FacilitiesPage = () => {
                   <th style={styles.th}>Type</th>
                   <th style={styles.th}>County</th>
                   <th style={styles.th}>Sub-county</th>
-                  <th style={styles.th}>Coordinates</th>\r\n                  <th style={styles.th}>Actions</th>
+                  <th style={styles.th}>Coordinates</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -789,6 +904,13 @@ const FacilitiesPage = () => {
                     <td style={styles.td}>{facility.sub_county || "-"}</td>
                     <td style={styles.td}>{facility.latitude}, {facility.longitude}</td>
                     <td style={styles.td}>
+                      <button
+                        type="button"
+                        style={styles.smallButton}
+                        onClick={() => openFacilityMembers(facility)}
+                      >
+                        Members
+                      </button>
                       <button
                         type="button"
                         style={styles.deleteButton}
@@ -804,6 +926,103 @@ const FacilitiesPage = () => {
           </div>
         )}
       </section>
+
+      {facilityMemberFacility && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalCard}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>
+                Facility Members: {facilityMemberFacility.name}
+              </h3>
+              <button style={styles.modalClose} onClick={closeFacilityMembers}>&times;</button>
+            </div>
+            <div style={styles.modalBody}>
+              {facilityMembersError && (
+                <div style={styles.modalMessage}>{facilityMembersError}</div>
+              )}
+              <div style={styles.modalRow}>
+                <label style={styles.modalLabel}>User ID</label>
+                <input
+                  style={styles.input}
+                  value={facilityMemberUserId}
+                  onChange={(event) => setFacilityMemberUserId(event.target.value)}
+                  placeholder="User hash ID"
+                />
+              </div>
+              <div style={styles.modalRow}>
+                <label style={styles.modalLabel}>Role</label>
+                <select
+                  style={styles.input}
+                  value={facilityMemberRole}
+                  onChange={(event) => setFacilityMemberRole(event.target.value)}
+                >
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div style={styles.modalActions}>
+                <button
+                  type="button"
+                  style={styles.secondaryButton}
+                  onClick={() => loadFacilityMembers(facilityMemberFacility)}
+                  disabled={facilityMembersLoading}
+                >
+                  Refresh
+                </button>
+                <button
+                  type="button"
+                  style={styles.primaryButton}
+                  onClick={addFacilityMember}
+                  disabled={facilityMembersLoading}
+                >
+                  Add Member
+                </button>
+              </div>
+              {facilityMemberMessage && (
+                <div style={styles.modalMessage}>{facilityMemberMessage}</div>
+              )}
+              <div style={{ ...styles.tableWrap, marginTop: "12px" }}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>User</th>
+                      <th style={styles.th}>Role</th>
+                      <th style={styles.th}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {facilityMembersLoading ? (
+                      <tr>
+                        <td style={styles.td} colSpan={3}>Loading...</td>
+                      </tr>
+                    ) : facilityMembers.length === 0 ? (
+                      <tr>
+                        <td style={styles.td} colSpan={3}>No members yet.</td>
+                      </tr>
+                    ) : (
+                      facilityMembers.map((member) => (
+                        <tr key={member.user_id}>
+                          <td style={styles.td}>{member.username || member.user_id}</td>
+                          <td style={styles.td}>{member.role}</td>
+                          <td style={styles.td}>
+                            <button
+                              type="button"
+                              style={styles.deleteButton}
+                              onClick={() => removeFacilityMember(member)}
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1016,6 +1235,26 @@ const styles = {
     fontWeight: 700,
     cursor: "pointer",
   },
+  secondaryButton: {
+    border: "1px solid #cbd5e1",
+    backgroundColor: "#f8fafc",
+    color: "#0f172a",
+    borderRadius: "10px",
+    padding: "10px 12px",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  smallButton: {
+    border: "1px solid #d1fae5",
+    backgroundColor: "#ecfdf5",
+    color: "#065f46",
+    borderRadius: "8px",
+    padding: "6px 10px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+    marginRight: "8px",
+  },
   deleteButton: {
     border: "1px solid #fecaca",
     backgroundColor: "#fee2e2",
@@ -1064,7 +1303,70 @@ const styles = {
     color: "#334155",
     borderTop: "1px solid #ecfdf5",
   },
-};
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 200,
+    padding: "16px",
+  },
+  modalCard: {
+    width: "min(720px, 95vw)",
+    backgroundColor: "#ffffff",
+    borderRadius: "16px",
+    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)",
+    border: "1px solid #e2e8f0",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "16px 20px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  modalClose: {
+    border: "none",
+    background: "transparent",
+    fontSize: "20px",
+    cursor: "pointer",
+    color: "#64748b",
+  },
+  modalBody: {
+    padding: "16px 20px",
+  },
+  modalRow: {
+    display: "grid",
+    gap: "8px",
+    marginBottom: "12px",
+  },
+  modalLabel: {
+    fontSize: "12px",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    color: "#64748b",
+    fontWeight: 700,
+  },
+  modalMessage: {
+    marginTop: "10px",
+    fontSize: "13px",
+    color: "#0f172a",
+  },
+  modalActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "6px",
+  },};
 
 export default FacilitiesPage;
 

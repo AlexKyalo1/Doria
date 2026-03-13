@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../utils/apiFetch";
 
 
 const LoginPage = () => {
@@ -17,7 +18,7 @@ const LoginPage = () => {
 
     try {
 
-      const res = await fetch("http://127.0.0.1:8000/api/accounts/token/", {
+      const res = await apiFetch("http://127.0.0.1:8000/api/accounts/token/", {
         method: "POST",        
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

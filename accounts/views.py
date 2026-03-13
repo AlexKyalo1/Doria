@@ -10,9 +10,12 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueValidator
 
 from utils.hashid import decode_id, encode_id
-from .models import Institution, InstitutionMembership
+from security.models import SecurityFacility
+from .models import Institution, InstitutionMembership, FacilityMembership
 from .serializers import (
     AddInstitutionMemberSerializer,
+    AddFacilityMemberSerializer,
+    FacilityMembershipSerializer,
     AdminUserSerializer,
     InstitutionMembershipSerializer,
     InstitutionSerializer,
@@ -141,6 +144,53 @@ def _can_manage_members(user, institution):
 def _require_site_admin(user):
     return bool(user and user.is_authenticated and user.is_staff)
 
+
+
+def _get_facility_from_hash(facility_hash):
+    facility_id = decode_id(facility_hash)
+    if not facility_id and isinstance(facility_hash, str) and facility_hash.isdigit():
+        facility_id = int(facility_hash)
+    if not facility_id:
+        return None
+
+    try:
+        return SecurityFacility.objects.get(id=facility_id)
+    except SecurityFacility.DoesNotExist:
+        return None
+    try:
+        return SecurityFacility.objects.get(id=facility_id)
+    except SecurityFacility.DoesNotExist:
+        return None
+
+
+def _can_manage_facility_members(user, facility):
+    if user is None or not user.is_authenticated:
+        return False
+    if getattr(user, "is_staff", False):
+        return True
+    if facility.institution_id:
+        if facility.institution.owner_id == user.id:
+            return True
+        if InstitutionMembership.objects.filter(
+            institution_id=facility.institution_id,
+            user=user,
+            role="admin",
+        ).exists():
+            return True
+    return FacilityMembership.objects.filter(
+        facility=facility,
+        user=user,
+        role="admin",
+    ).exists()
+
+
+def _can_view_facility_members(user, facility):
+    if _can_manage_facility_members(user, facility):
+        return True
+    return FacilityMembership.objects.filter(
+        facility=facility,
+        user=user,
+    ).exists()
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -354,6 +404,108 @@ def institution_members_list_api(request, institution_id):
     return Response(
         {
             "institution_id": encode_id(institution.id),
+            "members": serializer.data,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def facility_members_api(request, facility_id):
+    facility = _get_facility_from_hash(facility_id)
+    if facility is None:
+        return Response({"error": "Facility not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not _can_manage_facility_members(request.user, facility):
+        return Response(
+            {"error": "Only facility or institution admins can add members"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    serializer = AddFacilityMemberSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user_id = serializer.validated_data["user_id"]
+    role = serializer.validated_data["role"]
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    membership, created = FacilityMembership.objects.get_or_create(
+        facility=facility,
+        user=user,
+        defaults={"role": role},
+    )
+
+    if not created:
+        return Response(
+            {
+                "message": "User already a member",
+                "membership": FacilityMembershipSerializer(membership).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    return Response(
+        {
+            "message": "Member added successfully",
+            "membership": FacilityMembershipSerializer(membership).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def facility_member_detail_api(request, facility_id, user_id):
+    facility = _get_facility_from_hash(facility_id)
+    if facility is None:
+        return Response({"error": "Facility not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not _can_manage_facility_members(request.user, facility):
+        return Response(
+            {"error": "Only facility or institution admins can remove members"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    member_user_id = decode_id(user_id)
+    if not member_user_id:
+        return Response({"error": "Invalid user ID"}, status=status.HTTP_400_BAD_REQUEST)
+
+    deleted_count, _ = FacilityMembership.objects.filter(
+        facility=facility,
+        user_id=member_user_id,
+    ).delete()
+
+    if deleted_count == 0:
+        return Response({"error": "Membership not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({"message": "Member removed"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def facility_members_list_api(request, facility_id):
+    facility = _get_facility_from_hash(facility_id)
+    if facility is None:
+        return Response({"error": "Facility not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not _can_view_facility_members(request.user, facility):
+        return Response(
+            {"error": "Only facility or institution members can view members"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    memberships = FacilityMembership.objects.filter(facility=facility).select_related("user")
+    serializer = FacilityMembershipSerializer(memberships, many=True)
+
+    return Response(
+        {
+            "facility_id": encode_id(facility.id),
             "members": serializer.data,
         },
         status=status.HTTP_200_OK,

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../utils/apiFetch";
 
 import { useColorMode } from "../utils/useColorMode";
 
@@ -22,8 +23,8 @@ const DashboardPage = () => {
       setLoading(true);
       try {
         const [profileRes, institutionsRes] = await Promise.all([
-          fetch(`${API_BASE}/profile/`, { method: "GET", headers }),
-          fetch(`${API_BASE}/institutions/`, { method: "GET", headers }),
+          apiFetch(`${API_BASE}/profile/`, { method: "GET", headers }),
+          apiFetch(`${API_BASE}/institutions/`, { method: "GET", headers }),
         ]);
 
         const profileData = await profileRes.json();

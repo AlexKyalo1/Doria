@@ -3,15 +3,21 @@ from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from accounts.models import InstitutionMembership
+from accounts.models import InstitutionMembership, FacilityMembership
 from .models import Incident
 from .serializers import IncidentSerializer
+
 
 
 def _can_follow_up(user, incident):
     if user is None or not user.is_authenticated:
         return False
     if getattr(user, "is_staff", False):
+        return True
+    if incident.facility_id and FacilityMembership.objects.filter(
+        facility_id=incident.facility_id,
+        user_id=user.id,
+    ).exists():
         return True
     if incident.institution_id is None:
         return False
@@ -21,7 +27,6 @@ def _can_follow_up(user, incident):
         institution_id=incident.institution_id,
         user_id=user.id,
     ).exists()
-
 
 class IncidentListCreateView(generics.ListCreateAPIView):
     queryset = Incident.objects.all().order_by('-occurred_at')

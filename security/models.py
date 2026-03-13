@@ -1,5 +1,6 @@
-# security/models.py
+﻿# security/models.py
 from django.db import models
+from accounts.models import Institution
 
 class SecurityFacility(models.Model):
     FACILITY_TYPES = [
@@ -10,6 +11,13 @@ class SecurityFacility(models.Model):
     ]
 
     name = models.CharField(max_length=255)
+    institution = models.ForeignKey(
+        Institution,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="facilities",
+    )
     facility_type = models.CharField(max_length=50, choices=FACILITY_TYPES)
     county = models.CharField(max_length=100)
     sub_county = models.CharField(max_length=100, blank=True)

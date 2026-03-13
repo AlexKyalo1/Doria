@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
 
 const ACCOUNTS_API = "http://127.0.0.1:8000/api/accounts";
 const SECURITY_API = "http://127.0.0.1:8000/api/security";
@@ -30,13 +31,13 @@ const escapeHtml = (value) =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/\nnn"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
 const getFacilityTypeIcon = (type) => {
   const icons = {
-    police_station: "🚓",
-    police_post: "👮",
+    police_station: "👮",
+    police_post: "🚔",
     dci: "🕵️",
     administration: "🏛️",
   };
@@ -69,7 +70,7 @@ function CenterControl(div, onClick) {
   div.style.alignItems = 'center';
   div.style.gap = '6px';
   div.style.transition = 'all 0.2s';
-  div.innerHTML = '📍 <span>Reset Center</span>';
+  div.innerHTML = '🧭 <span>Reset Center</span>';
   
   div.addEventListener('click', onClick);
   div.addEventListener('mouseenter', () => {
@@ -175,7 +176,7 @@ const FacilitiesDistanceMap = ({
           <circle cx="20" cy="22" r="2" fill="white">
             <animate attributeName="r" values="2;3;2" dur="1s" repeatCount="indefinite" />
           </circle>
-          <text x="20" y="28" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚠️</text>
+          <text x="20" y="28" text-anchor="middle" fill="white" font-size="12" font-weight="bold">📍</text>
         </g>
       </svg>
     `;
@@ -187,38 +188,28 @@ const FacilitiesDistanceMap = ({
     };
   }, []);
 
-  const showFacilityInfo = useCallback((facility, marker) => {
+    const showFacilityInfo = useCallback((facility, marker) => {
     if (!clickInfoRef.current) {
       clickInfoRef.current = new window.google.maps.InfoWindow({
         maxWidth: 240,
       });
     }
-    
+
     const colors = getFacilityTypeColor(facility.facility_type);
     const typeLabel = facility.facility_type
       ? facility.facility_type.replace("_", " ").toUpperCase()
       : "";
-    
+
     const details = `
-      <div style="font-family: system-ui, -apple-system, sans-serif; padding: 6px 4px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="background: ${colors.primary}; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
-            ${getFacilityTypeIcon(facility.facility_type)}
-          </div>
-          <div>
-            <div style="font-weight:700; color: #1f2937; font-size: 13px;">${escapeHtml(facility.name)}</div>
-            <div style="font-size:11px; color: #6b7280;">${escapeHtml(typeLabel)}</div>
-          </div>
+      <div style="font-family: system-ui, -apple-system, sans-serif;">
+        <div style="font-weight: 600; color: #111827; margin-bottom: 6px;">${escapeHtml(facility.name || "Facility")}</div>
+        <div style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: ${colors.text}; background: ${colors.bg};">
+          ${escapeHtml(typeLabel || "FACILITY")}
         </div>
-        <div style="margin-top: 8px; font-size: 11px; color: #4b5563;">
-          ${escapeHtml(facility.county)} • ${escapeHtml(facility.sub_county || "-")}
-        </div>
-        <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
-          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${facility.active ? '#10b981' : '#ef4444'};"></span>
-          <span style="font-size: 11px; font-weight: 600; color: #374151;">${facility.active ? 'ACTIVE' : 'INACTIVE'}</span>
-        </div>
+        ${facility.address ? `<div style="margin-top: 8px; font-size: 12px; color: #6b7280;">${escapeHtml(facility.address)}</div>` : ""}
       </div>
-    `;    
+    `;
+
     clickInfoRef.current.setContent(details);
     clickInfoRef.current.open({ map: mapRef.current, anchor: marker });
   }, []);
@@ -227,7 +218,7 @@ const FacilitiesDistanceMap = ({
     const feedbackWindow = new window.google.maps.InfoWindow({
       content: `
         <div style="padding: 4px 8px; background: #10b981; color: white; border-radius: 4px; font-size: 12px;">
-          📍 Selected for distance
+          ✅ Selected for distance
         </div>
       `,
       pixelOffset: new window.google.maps.Size(0, -30)
@@ -310,7 +301,7 @@ const FacilitiesDistanceMap = ({
               ${escapeHtml(facility.facility_type?.replace('_', ' ').toUpperCase() || 'FACILITY')}
             </div>
             <div style="font-size: 11px; color: #6b7280; margin-top: 6px; border-top: 1px solid #e5e7eb; padding-top: 4px;">
-              🔍 Single-click: Select for distance | 👆 Double-click: Show details
+              🖱️ Single-click: Select for distance | ✌️ Double-click: Show details
             </div>
           </div>
         `;
@@ -376,12 +367,12 @@ const FacilitiesDistanceMap = ({
         }
         const brief = `
           <div style="padding: 8px 12px; background: #fee2e2; border-radius: 8px; border-left: 4px solid #dc2626;">
-            <div style="font-weight:600; font-size: 14px;">⚠️ ${escapeHtml(incident.incident_type || "Unknown")}</div>
+            <div style="font-weight:600; font-size: 14px;">🚨 ${escapeHtml(incident.incident_type || "Unknown")}</div>
             <div style="font-size: 12px; color: #4b5563; margin-top: 4px;">
               Severity: ${incident.severity || 'medium'}
             </div>
             <div style="font-size: 11px; color: #6b7280; margin-top: 6px;">
-              🔍 Click for details
+              📝 Click for details
             </div>
           </div>
         `;
@@ -411,68 +402,38 @@ const FacilitiesDistanceMap = ({
           (typeof incident.facility === "string" ? incident.facility : null) ||
           facilityFromMap?.name ||
           null;
-        const severity = incident.severity || 'medium';
-        const severityColors = {
-          high: '#dc2626',
-          medium: '#f59e0b',
-          low: '#10b981'
-        };
-        
+
+        const incidentLabel = escapeHtml(incident.incident_type || "Incident");
+        const obLabel = escapeHtml(incident.ob_number || "-");
+        const buttonId = incident.id ? `incident-open-${incident.id}` : null;
+        const openIncidentUrl = incident.id ? `/incidents?incident=${encodeURIComponent(incident.id)}` : null;
+
         const details = `
-          <div style="font-family: system-ui, -apple-system, sans-serif;">
-            <div style="margin-bottom: 12px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 24px;">⚠️</span>
-                <div>
-                  <div style="font-weight:700; color: #1f2937; font-size: 16px;">${escapeHtml(incident.incident_type || "Unknown")}</div>
-                  <div style="font-size:12px; color: #6b7280;">OB: ${escapeHtml(incident.ob_number || "-")}</div>
-                  ${facilityName ? `<div style="font-size:12px; color: #6b7280; margin-top: 2px;">Facility: ${escapeHtml(facilityName)}</div>` : ""}
-                </div>
-              </div>
-            </div>
-            <div style="border-top: 1px solid #e5e7eb; padding-top: 12px;">
-              <div style="margin-bottom: 12px;">
-                <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Description</div>
-                <div style="font-size: 13px; background: #f9fafb; padding: 8px; border-radius: 6px;">
-                  ${escapeHtml(incident.description || "No description")}
-                </div>
-              </div>
-              ${(incident.follow_up_note || incident.follow_up_status) ? `
-                <div style="margin-bottom: 12px;">
-                  <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Follow-up</div>
-                  <div style="font-size: 13px; background: #f0f9ff; padding: 8px; border-radius: 6px;">
-                    <div><strong>Status:</strong> ${escapeHtml(incident.follow_up_status || "open")}</div>
-                    ${incident.follow_up_note ? `<div style="margin-top: 4px;">${escapeHtml(incident.follow_up_note)}</div>` : ""}
-                    ${(incident.follow_up_by_name || incident.follow_up_at) ? `<div style="margin-top: 6px; font-size: 11px; color: #6b7280;">
-                      ${incident.follow_up_by_name ? `By ${escapeHtml(incident.follow_up_by_name)}` : ""}
-                      ${incident.follow_up_at ? ` • ${escapeHtml(new Date(incident.follow_up_at).toLocaleString())}` : ""}
-                    </div>` : ""}
-                  </div>
-                </div>
-              ` : ""}
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div>
-                  <div style="font-size: 11px; color: #6b7280;">Occurred</div>
-                  <div style="font-size: 13px; font-weight: 500;">${escapeHtml(new Date(incident.occurred_at).toLocaleString() || "-")}</div>
-                </div>
-                <div>
-                  <span style="background: ${severityColors[severity]}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">
-                    ${severity.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-              ${incident.location ? `
-                <div style="margin-top: 8px;">
-                  <div style="font-size: 11px; color: #6b7280;">Location</div>
-                  <div style="font-size: 13px;">${escapeHtml(incident.location)}</div>
-                </div>
-              ` : ''}
-            </div>
+          <div style="font-family: system-ui, -apple-system, sans-serif; padding: 6px 0;">
+            <div style="font-weight: 600; font-size: 14px; color: #111827;">${incidentLabel}</div>
+            <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">OB: ${obLabel}</div>
+            ${facilityName ? `<div style="font-size:12px; color:#6b7280; margin-top: 2px;">Facility: ${escapeHtml(facilityName)}</div>` : ""}
+            ${buttonId ? `
+              <button id="${buttonId}" style="margin-top: 10px; background: #111827; color: #fff; border: 0; border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer;">
+                View / Update Incident
+              </button>
+            ` : ""}
           </div>
         `;
-        
+
         clickInfoRef.current.setContent(details);
         clickInfoRef.current.open({ map: mapRef.current, anchor: marker });
+        if (buttonId && openIncidentUrl) {
+          window.google.maps.event.addListenerOnce(clickInfoRef.current, "domready", () => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+              button.addEventListener("click", (event) => {
+                event.preventDefault();
+                window.location.href = openIncidentUrl;
+              });
+            }
+          });
+        }
       });
 
       entries.push({ 
@@ -599,8 +560,7 @@ const FacilitiesMapPage = () => {
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState({ type: "", text: "" });
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
-
-
+  const isAdmin = Boolean(profile?.is_staff);
   const headers = useMemo(
     () => ({
       "Content-Type": "application/json",
@@ -632,7 +592,7 @@ const FacilitiesMapPage = () => {
   };
 
   const loadProfile = async () => {
-    const res = await fetch(`${ACCOUNTS_API}/profile/`, { headers });
+    const res = await apiFetch(`${ACCOUNTS_API}/profile/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load profile"));
@@ -643,7 +603,7 @@ const FacilitiesMapPage = () => {
 
   const loadInstitutions = async (user) => {
     const scope = user?.is_staff ? "?scope=all" : "";
-    const res = await fetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
+    const res = await apiFetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load institutions"));
@@ -656,7 +616,7 @@ const FacilitiesMapPage = () => {
   };
 
   const loadFacilities = async () => {
-    const res = await fetch(`${SECURITY_API}/facilities/`, { headers });
+    const res = await apiFetch(`${SECURITY_API}/facilities/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load facilities"));
@@ -667,7 +627,7 @@ const FacilitiesMapPage = () => {
   };
 
   const loadIncidents = async () => {
-    const res = await fetch(`${INCIDENTS_API}/map/`, { headers });
+    const res = await apiFetch(`${INCIDENTS_API}/map/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load incidents"));
@@ -720,13 +680,31 @@ const FacilitiesMapPage = () => {
     load();
   }, [token]);
 
+  const allowedInstitutionIds = useMemo(() => {
+    return new Set(institutions.map((institution) => String(institution.id)));
+  }, [institutions]);
+
   const filteredFacilities = useMemo(() => {
     const list = facilities.filter(Boolean);
-    if (!selectedInstitutionId) return list;
-    return list.filter((facility) => 
-      facility.institution_id == null || String(facility.institution_id) === String(selectedInstitutionId)
+    const scoped = list.filter((facility) => {
+      const facilityInstitutionId = facility.institution_id;
+      if (!isAdmin) {
+        if (!facilityInstitutionId) return false;
+        return allowedInstitutionIds.has(String(facilityInstitutionId));
+      }
+      return true;
+    });
+
+    if (!selectedInstitutionId) {
+      return scoped;
+    }
+
+    return scoped.filter((facility) =>
+      facility.institution_id == null ||
+      String(facility.institution_id) === String(selectedInstitutionId)
     );
-  }, [facilities, selectedInstitutionId]);
+  }, [facilities, selectedInstitutionId, isAdmin, allowedInstitutionIds]);
+
 
   const mappableFacilities = useMemo(
     () =>
@@ -743,11 +721,14 @@ const FacilitiesMapPage = () => {
 
   const filteredIncidents = useMemo(() => {
     const list = incidents.filter(Boolean);
-    if (!selectedInstitutionId) return list;
+    if (!selectedInstitutionId) {
+      return list;
+    }
     return list.filter(
       (incident) => incident.institution_id == null || String(incident.institution_id) === String(selectedInstitutionId)
     );
   }, [incidents, selectedInstitutionId]);
+
 
   const mappableIncidents = useMemo(
     () =>
@@ -827,7 +808,7 @@ const FacilitiesMapPage = () => {
 
     try {
       const params = new URLSearchParams(distanceForm).toString();
-      const res = await fetch(`${SECURITY_API}/facilities/distance/?${params}`, { headers });
+      const res = await apiFetch(`${SECURITY_API}/facilities/distance/?${params}`, { headers });
       const data = await res.json();
 
       if (!res.ok) {
@@ -871,7 +852,7 @@ const FacilitiesMapPage = () => {
           <h1 style={{ ...styles.title, color: theme.text }}>🗺️ Facility Distance Map</h1>
           {profile && (
             <div style={styles.modeBadge}>
-              {profile.is_staff ? "👑 Admin View" : "👤 User View"}
+              {profile.is_staff ? "🛡️ Admin View" : "👤 User View"}
             </div>
           )}
         </div>
@@ -886,7 +867,7 @@ const FacilitiesMapPage = () => {
               setDistanceForm({ from_id: "", to_id: "" });
             }}
           >
-            <option value="">🏛️ All Institutions</option>
+            <option value="">🏢 All Institutions</option>
             {institutions.map((institution) => (
               <option key={institution.id} value={String(institution.id)}>
                 {institution.name}
@@ -898,20 +879,20 @@ const FacilitiesMapPage = () => {
 
       <div style={styles.instructionsBanner}>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>🔍</span>
+          <span style={styles.instructionIcon}>🖱️</span>
           <span><strong>Single-click:</strong> Select facility for distance</span>
         </div>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>👆👆</span>
+          <span style={styles.instructionIcon}>📏</span>
           <span><strong>Double-click:</strong> Show detailed info (always)</span>
         </div>
         <div style={styles.instructionDivider}>|</div>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>📌</span>
+          <span style={styles.instructionIcon}>🖱️</span>
           <span>From: {fromFacility?.name || 'Not selected'}</span>
         </div>
         <div style={styles.instructionItem}>
-          <span style={styles.instructionIcon}>📍</span>
+          <span style={styles.instructionIcon}>🖱️</span>
           <span>To: {toFacility?.name || 'Not selected'}</span>
         </div>
       </div>
@@ -925,15 +906,15 @@ const FacilitiesMapPage = () => {
         </div>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{mappableIncidents.length}</div>
-          <div style={styles.statLabel}>⚠️ Incidents on Map</div>
+          <div style={styles.statLabel}>🚨 Incidents on Map</div>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{filteredFacilities.length - mappableFacilities.length}</div>
-          <div style={styles.statLabel}>❌ Missing Coordinates</div>
+          <div style={styles.statLabel}>? Missing Coordinates</div>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statValue}>{filteredFacilities.filter((f) => f.active).length}</div>
-          <div style={styles.statLabel}>✅ Active Facilities</div>
+          <div style={styles.statLabel}>? Active Facilities</div>
         </div>
       </div>
 
@@ -979,7 +960,7 @@ const FacilitiesMapPage = () => {
         <form onSubmit={calculateDistance} style={styles.formGrid}>
           <div>
             <label style={styles.label}>
-              <span style={styles.labelIcon}>📌</span> From
+              <span style={styles.labelIcon}>📍</span> From
             </label>
             <select
               style={styles.input}
@@ -997,7 +978,7 @@ const FacilitiesMapPage = () => {
           </div>
           <div>
             <label style={styles.label}>
-              <span style={styles.labelIcon}>📍</span> To
+              <span style={styles.labelIcon}>🏁</span> To
             </label>
             <select
               style={styles.input}
@@ -1026,7 +1007,7 @@ const FacilitiesMapPage = () => {
                 <strong>{typeof distanceResult.distance_km === "number" ? distanceResult.distance_km.toFixed(2) : distanceResult.distance_km} km</strong>
               </div>
               <div style={styles.resultPath}>
-                {distanceResult.from.name} → {distanceResult.to.name}
+                {distanceResult.from.name} ? {distanceResult.to.name}
               </div>
             </div>
           </div>
@@ -1298,3 +1279,4 @@ const styles = {
 };
 
 export default FacilitiesMapPage;
+

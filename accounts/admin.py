@@ -1,6 +1,6 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 
-from .models import Institution, InstitutionMembership
+from .models import Institution, InstitutionMembership, FacilityMembership
 
 
 @admin.register(Institution)
@@ -15,3 +15,10 @@ class InstitutionMembershipAdmin(admin.ModelAdmin):
     list_filter = ("role",)
     search_fields = ("institution__name", "user__username", "user__email")
 
+
+
+@admin.register(FacilityMembership)
+class FacilityMembershipAdmin(admin.ModelAdmin):
+    list_display = ("facility", "user", "role", "joined_at")
+    list_filter = ("role",)
+    search_fields = ("facility__name", "user__username", "user__email")

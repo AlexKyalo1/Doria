@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿﻿﻿﻿﻿﻿﻿﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
 
 const ACCOUNTS_API = "http://127.0.0.1:8000/api/accounts";
 const SECURITY_API = "http://127.0.0.1:8000/api/security";
@@ -121,6 +122,11 @@ const IncidentsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [banner, setBanner] = useState({ type: "", text: "" });
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
+  const [followUpIncident, setFollowUpIncident] = useState(null);
+  const [followUpStatus, setFollowUpStatus] = useState("open");
+  const [followUpNote, setFollowUpNote] = useState("");
+  const [followUpMessage, setFollowUpMessage] = useState("");
+  const [followUpSaving, setFollowUpSaving] = useState(false);
   const [placeQuery, setPlaceQuery] = useState("");
   const [placeSuggestions, setPlaceSuggestions] = useState([]);
   const [placeLoading, setPlaceLoading] = useState(false);
@@ -128,8 +134,11 @@ const IncidentsPage = () => {
   const [placesError, setPlacesError] = useState("");
   const selectingRef = useRef(false);
   const suppressNextSearchRef = useRef(false);
+  const followUpParamHandledRef = useRef(false);
   const autocompleteServiceRef = useRef(null);
   const placesServiceRef = useRef(null);
+
+  const isAdmin = Boolean(profile?.is_staff);
 
   const headers = useMemo(
     () => ({
@@ -139,10 +148,67 @@ const IncidentsPage = () => {
     [token]
   );
 
+  const openFollowUp = (incident) => {
+    setFollowUpIncident(incident);
+    setFollowUpStatus(incident.follow_up_status || "open");
+    setFollowUpNote(incident.follow_up_note || "");
+    setFollowUpMessage("");
+  };
+
+  const closeFollowUp = () => {
+    setFollowUpIncident(null);
+    setFollowUpMessage("");
+    setFollowUpSaving(false);
+  };
+
+  const saveFollowUp = async () => {
+    if (!followUpIncident) return;
+    setFollowUpSaving(true);
+    setFollowUpMessage("Saving...");
+    try {
+      const res = await apiFetch(`${INCIDENTS_API}/${followUpIncident.id}/`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          follow_up_status: followUpStatus,
+          follow_up_note: followUpNote,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to update follow-up");
+      }
+      setIncidents((prev) =>
+        prev.map((item) => (item.id === followUpIncident.id ? { ...item, ...data } : item))
+      );
+      setFollowUpIncident((prev) => (prev ? { ...prev, ...data } : prev));
+      setFollowUpMessage("Saved");
+    } catch (error) {
+      setFollowUpMessage(error.message || "Failed to save");
+    } finally {
+      setFollowUpSaving(false);
+    }
+  };
+
   const showBanner = (type, text) => {
     setBanner({ type, text });
     setTimeout(() => setBanner({ type: "", text: "" }), 3500);
   };
+  useEffect(() => {
+    if (followUpParamHandledRef.current) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const incidentId = params.get("incident");
+    if (!incidentId) {
+      return;
+    }
+    const match = incidents.find((item) => String(item.id) === String(incidentId));
+    if (match) {
+      followUpParamHandledRef.current = true;
+      openFollowUp(match);
+    }
+  }, [incidents]);
 
   const setCoordinates = (lat, lng) => {
     setIncidentForm((prev) => ({
@@ -179,7 +245,7 @@ const IncidentsPage = () => {
   };
 
   const loadProfile = async () => {
-    const res = await fetch(`${ACCOUNTS_API}/profile/`, { headers });
+    const res = await apiFetch(`${ACCOUNTS_API}/profile/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load profile"));
@@ -191,7 +257,7 @@ const IncidentsPage = () => {
 
   const loadInstitutions = async (user) => {
     const scope = user?.is_staff ? "?scope=all" : "";
-    const res = await fetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
+    const res = await apiFetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load institutions"));
@@ -211,7 +277,7 @@ const IncidentsPage = () => {
   };
 
   const loadFacilities = async () => {
-    const res = await fetch(`${SECURITY_API}/facilities/`, { headers });
+    const res = await apiFetch(`${SECURITY_API}/facilities/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load facilities"));
@@ -222,7 +288,7 @@ const IncidentsPage = () => {
   };
 
   const loadIncidents = async () => {
-    const res = await fetch(`${INCIDENTS_API}/`, { headers });
+    const res = await apiFetch(`${INCIDENTS_API}/`, { headers });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(getErrorMessage(data, "Failed to load incidents"));
@@ -357,16 +423,23 @@ const IncidentsPage = () => {
     if (!selectedInstitutionId) {
       return list;
     }
-    return list.filter((facility) => facility.institution_id == null || String(facility.institution_id) === String(selectedInstitutionId));
+    return list.filter((facility) =>
+      facility.institution_id == null ||
+      String(facility.institution_id) === String(selectedInstitutionId)
+    );
   }, [facilities, selectedInstitutionId]);
+
 
   const filteredIncidents = useMemo(() => {
     const list = incidents.filter(Boolean);
     if (!selectedInstitutionId) {
       return list;
     }
-    return list.filter((incident) => incident.institution_id == null || String(incident.institution_id) === String(selectedInstitutionId));
+    return list.filter(
+      (incident) => incident.institution_id == null || String(incident.institution_id) === String(selectedInstitutionId)
+    );
   }, [incidents, selectedInstitutionId]);
+
 
   const previewCenter = useMemo(() => {
     const lat = parseCoord(incidentForm.latitude);
@@ -442,7 +515,7 @@ const IncidentsPage = () => {
 
     try {
       setSubmitting(true);
-      const res = await fetch(`${INCIDENTS_API}/`, {
+      const res = await apiFetch(`${INCIDENTS_API}/`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
@@ -495,7 +568,7 @@ const IncidentsPage = () => {
               setIncidentForm((prev) => ({ ...prev, institution_id: event.target.value, facility_id: "" }));
             }}
           >
-            <option value="">All Institutions</option>
+            {isAdmin && <option value="">All Institutions</option>}
             {institutions.map((institution) => (
               <option key={institution.id} value={String(institution.id)}>
                 {institution.name}
@@ -661,6 +734,7 @@ const IncidentsPage = () => {
                   <th style={styles.th}>Facility</th>
                   <th style={styles.th}>Occurred</th>
                   <th style={styles.th}>Coordinates</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -673,6 +747,15 @@ const IncidentsPage = () => {
                     <td style={styles.td}>
                       {incident.latitude}, {incident.longitude}
                     </td>
+                    <td style={styles.td}>
+                      {(profile?.is_staff ||
+                        String(incident.institution_id || "") ===
+                          String(selectedInstitutionId || "")) && (
+                        <button style={styles.smallButton} onClick={() => openFollowUp(incident)}>
+                          View / Update
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -680,6 +763,46 @@ const IncidentsPage = () => {
           </div>
         )}
       </section>
+
+      {followUpIncident && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalCard}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Follow-up: {followUpIncident.ob_number}</h3>
+              <button style={styles.modalClose} onClick={closeFollowUp}>&times;</button>
+            </div>
+            <div style={styles.modalBody}>
+              <div style={styles.modalRow}>
+                <label style={styles.modalLabel}>Status</label>
+                <select
+                  style={styles.input}
+                  value={followUpStatus}
+                  onChange={(event) => setFollowUpStatus(event.target.value)}
+                >
+                  <option value="open">Open</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </div>
+              <div style={styles.modalRow}>
+                <label style={styles.modalLabel}>Note</label>
+                <textarea
+                  style={styles.textarea}
+                  rows={4}
+                  value={followUpNote}
+                  onChange={(event) => setFollowUpNote(event.target.value)}
+                />
+              </div>
+              {followUpMessage && <div style={styles.modalMessage}>{followUpMessage}</div>}
+            </div>
+            <div style={styles.modalActions}>
+              <button style={styles.secondaryButton} onClick={closeFollowUp} disabled={followUpSaving}>Cancel</button>
+              <button style={styles.primaryButton} onClick={saveFollowUp} disabled={followUpSaving}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
@@ -765,7 +888,86 @@ const styles = {
     padding: "18px",
     backgroundColor: "#ffffff",
   },
-  cardTitle: {
+  smallButton: {
+    padding: "6px 10px",
+    fontSize: "12px",
+    borderRadius: "6px",
+    border: "1px solid #0f766e",
+    backgroundColor: "#0f766e",
+    color: "#fff",
+    cursor: "pointer",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+    padding: "16px",
+  },
+  modalCard: {
+    width: "min(520px, 100%)",
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 20px 45px rgba(2, 6, 23, 0.25)",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "12px 16px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: "16px",
+  },
+  modalClose: {
+    border: "none",
+    background: "transparent",
+    fontSize: "20px",
+    cursor: "pointer",
+  },
+  modalBody: {
+    padding: "16px",
+    display: "grid",
+    gap: "12px",
+  },
+  modalRow: {
+    display: "grid",
+    gap: "6px",
+  },
+  modalLabel: {
+    fontSize: "12px",
+    color: "#475569",
+    fontWeight: 600,
+  },
+  modalMessage: {
+    fontSize: "12px",
+    color: "#64748b",
+  },
+  modalActions: {
+    padding: "12px 16px",
+    borderTop: "1px solid #e2e8f0",
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "8px",
+  },
+  textarea: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "10px",
+    padding: "10px 12px",
+    fontSize: "14px",
+    width: "100%",
+    boxSizing: "border-box",
+  },  cardTitle: {
     margin: "0 0 8px",
     fontSize: "18px",
     color: "#0f5132",
@@ -887,6 +1089,17 @@ const styles = {
 };
 
 export default IncidentsPage;
+
+
+
+
+
+
+
+
+
+
+
 
 
 

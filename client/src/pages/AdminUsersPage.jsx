@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
 
 const API_BASE = "http://127.0.0.1:8000/api/accounts";
 
@@ -44,7 +45,7 @@ const AdminUsersPage = () => {
       setError("");
       try {
         const q = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : "";
-        const res = await fetch(`${API_BASE}/admin/users/${q}`, {
+        const res = await apiFetch(`${API_BASE}/admin/users/${q}`, {
           method: "GET",
           headers,
         });
@@ -72,7 +73,7 @@ const AdminUsersPage = () => {
   const updateUser = async (userId, payload) => {
     setUpdatingUsers((prev) => ({ ...prev, [userId]: true }));
     try {
-      const res = await fetch(`${API_BASE}/admin/users/${userId}/`, {
+      const res = await apiFetch(`${API_BASE}/admin/users/${userId}/`, {
         method: "PATCH",
         headers,
         body: JSON.stringify(payload),
@@ -99,7 +100,7 @@ const AdminUsersPage = () => {
 
     setDeletingUsers((prev) => ({ ...prev, [userId]: true }));
     try {
-      const res = await fetch(`${API_BASE}/admin/users/${userId}/`, {
+      const res = await apiFetch(`${API_BASE}/admin/users/${userId}/`, {
         method: "DELETE",
         headers,
       });

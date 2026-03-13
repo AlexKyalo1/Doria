@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getFrontendSettings } from "../utils/frontendSettings";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
 
 const API_BASE = "http://127.0.0.1:8000/api/accounts";
 
@@ -61,11 +62,11 @@ const InstitutionsPage = () => {
       setDetailStatus("loading");
       try {
         const [detailRes, membersRes] = await Promise.all([
-          fetch(`${API_BASE}/institutions/${institutionId}/`, {
+          apiFetch(`${API_BASE}/institutions/${institutionId}/`, {
             method: "GET",
             headers,
           }),
-          fetch(`${API_BASE}/institutions/${institutionId}/members/list/`, {
+          apiFetch(`${API_BASE}/institutions/${institutionId}/members/list/`, {
             method: "GET",
             headers,
           }),
@@ -94,7 +95,7 @@ const InstitutionsPage = () => {
   const fetchInstitutions = useCallback(async () => {
     try {
       setStatus("loading");
-      const res = await fetch(`${API_BASE}/institutions/`, {
+      const res = await apiFetch(`${API_BASE}/institutions/`, {
         method: "GET",
         headers,
       });
@@ -135,7 +136,7 @@ const InstitutionsPage = () => {
     event.preventDefault();
 
     try {
-      const res = await fetch(`${API_BASE}/institutions/`, {
+      const res = await apiFetch(`${API_BASE}/institutions/`, {
         method: "POST",
         headers,
         body: JSON.stringify(createForm),
@@ -164,7 +165,7 @@ const InstitutionsPage = () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/institutions/${selectedInstitutionId}/members/`, {
+      const res = await apiFetch(`${API_BASE}/institutions/${selectedInstitutionId}/members/`, {
         method: "POST",
         headers,
         body: JSON.stringify(memberForm),
@@ -194,7 +195,7 @@ const InstitutionsPage = () => {
     }
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE}/institutions/${selectedInstitutionId}/members/${userId}/`,
         {
           method: "DELETE",

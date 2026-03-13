@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiFetch } from "../utils/apiFetch";
 
 const RegistrationPage = () => {
   const [username, setUsername] = useState("");
@@ -21,7 +22,7 @@ const RegistrationPage = () => {
     }
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/accounts/register/", {
+      const res = await apiFetch("http://127.0.0.1:8000/api/accounts/register/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password, confirm_password: confirmPassword }),

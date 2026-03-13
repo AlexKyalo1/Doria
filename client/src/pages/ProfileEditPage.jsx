@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
 
 const ProfileEditPage = () => {
   const { isDark } = useColorMode();
@@ -24,7 +25,7 @@ const ProfileEditPage = () => {
     const fetchProfile = async () => {
       setStatus("loading");
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/accounts/profile/update/", {
+        const res = await apiFetch("http://127.0.0.1:8000/api/accounts/profile/update/", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -98,7 +99,7 @@ const ProfileEditPage = () => {
 
     setSaveStatus("loading");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/accounts/profile/update/", {
+      const res = await apiFetch("http://127.0.0.1:8000/api/accounts/profile/update/", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
