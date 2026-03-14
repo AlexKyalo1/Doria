@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -24,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-wa&6#6zm1_pw%f5dy2r^7#u*ju519ov_vjyij1n&3n0mo9%*5$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["doria.matokeo.co.ke", "127.0.0.1", "localhost"]
 
@@ -74,9 +75,13 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+OPENAI_INCIDENT_INSIGHTS_MODEL = os.getenv("OPENAI_INCIDENT_INSIGHTS_MODEL", "gpt-4o-mini")
+
 SECURITY_RESPONSE_RULES = {
     404: {
-        "threshold": 1,
+        "threshold": 5,
         "window_seconds": 300,
         "block_seconds": 1800,
         "reason": "Repeated 404 probing detected",

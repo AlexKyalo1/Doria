@@ -10,6 +10,7 @@ const routeTitles = {
   "/facilities": "Facilities",
   "/facilities/map": "Facility Map",
   "/incidents": "Incidents",
+  "/ai/insights": "AI Insights",
   "/settings": "Settings",
   "/dashboard": "Dashboard",
   "/admin/users": "Admin Users",
@@ -156,6 +157,11 @@ const BasePage = () => {
           <NavLink to="/dashboard" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
             <span style={linkIconStyle}>{"\ud83d\udcca"}</span>
             {sidebarOpen && <span style={linkTextStyle}>Dashboard</span>}
+          </NavLink>
+
+          <NavLink to="/ai/insights" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            <span style={linkIconStyle}>{"\ud83e\udde0"}</span>
+            {sidebarOpen && <span style={linkTextStyle}>AI Insights</span>}
           </NavLink>
 
           <NavLink to="/settings" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>

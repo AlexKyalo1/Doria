@@ -12,6 +12,7 @@ import SettingsPage from "./pages/SettingsPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminBlockedIpsPage from "./pages/AdminBlockedIpsPage";
+import AiIncidentInsightsPage from "./pages/AiIncidentInsightsPage";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import FacilitiesMapPage from "./pages/FacilitiesMapPage";
 import IncidentsPage from "./pages/IncidentsPage";
@@ -45,6 +46,7 @@ function App() {
           <Route path="facilities" element={<FacilitiesPage />} />
           <Route path="facilities/map" element={<FacilitiesMapPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="ai/insights" element={<AiIncidentInsightsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="admin/users" element={<AdminUsersPage />} />
           <Route path="admin/security" element={<AdminBlockedIpsPage />} />

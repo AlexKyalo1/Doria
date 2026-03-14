@@ -91,6 +91,7 @@ const DashboardPage = () => {
   const quickActions = [
     { label: "Create Institution", path: "/institutions", icon: "+" },
     { label: "Manage Members", path: "/institutions", icon: "\ud83d\udc65" },
+    { label: "AI Insights", path: "/ai/insights", icon: "\ud83e\udde0" },
     { label: "Edit Profile", path: "/profile/update", icon: "\u270e" },
     { label: "Frontend Settings", path: "/settings", icon: "\u2699\ufe0f" },
   ];
