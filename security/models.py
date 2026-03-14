@@ -1,6 +1,7 @@
-﻿# security/models.py
 from django.db import models
+from django.utils import timezone
 from accounts.models import Institution
+
 
 class SecurityFacility(models.Model):
     FACILITY_TYPES = [
@@ -27,3 +28,23 @@ class SecurityFacility(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_facility_type_display()})"
+
+
+class BlockedIP(models.Model):
+    ip_address = models.CharField(max_length=64, unique=True)
+    trigger_status = models.PositiveSmallIntegerField()
+    hit_count = models.PositiveIntegerField(default=0)
+    last_path = models.CharField(max_length=255, blank=True)
+    reason = models.CharField(max_length=255)
+    blocked_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-blocked_at"]
+
+    def __str__(self):
+        return f"{self.ip_address} blocked until {self.expires_at:%Y-%m-%d %H:%M:%S}"
+
+    def is_expired(self):
+        return self.expires_at <= timezone.now()

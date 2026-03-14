@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-wa&6#6zm1_pw%f5dy2r^7#u*ju519ov_vjyij1n&3n0mo9%*5$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["doria.matokeo.co.ke","127.0.0.1","localhost"]
+ALLOWED_HOSTS = ["doria.matokeo.co.ke", "127.0.0.1", "localhost"]
 
 
 # Application definition
@@ -46,8 +47,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # <- add this at top
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'security.middleware.ResponseGuardMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -55,23 +57,45 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-#allow cross origin, this method is not default. I added it
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000"
 ]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
 
-from datetime import timedelta
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(hours=3),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+SECURITY_RESPONSE_RULES = {
+    404: {
+        "threshold": 1,
+        "window_seconds": 300,
+        "block_seconds": 1800,
+        "reason": "Repeated 404 probing detected",
+    },
+    403: {
+        "threshold": 5,
+        "window_seconds": 300,
+        "block_seconds": 1800,
+        "reason": "Repeated forbidden access attempts detected",
+    },
+    503: {
+        "threshold": 3,
+        "window_seconds": 300,
+        "block_seconds": 1800,
+        "reason": "Repeated service disruption triggering detected",
+    },
+}
+
+SECURITY_IP_WHITELIST = ["127.0.0.1", "::1"]
 
 ROOT_URLCONF = 'doria.urls'
 

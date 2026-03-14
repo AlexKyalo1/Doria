@@ -1,6 +1,6 @@
-﻿from rest_framework import serializers
+from rest_framework import serializers
 from utils.hashid_field import HashIdField
-from .models import SecurityFacility
+from .models import BlockedIP, SecurityFacility
 
 
 class SecurityFacilitySerializer(serializers.ModelSerializer):
@@ -17,5 +17,21 @@ class SecurityFacilitySerializer(serializers.ModelSerializer):
             "sub_county",
             "latitude",
             "longitude",
+            "active",
+        ]
+
+
+class BlockedIPSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlockedIP
+        fields = [
+            "id",
+            "ip_address",
+            "trigger_status",
+            "hit_count",
+            "last_path",
+            "reason",
+            "blocked_at",
+            "expires_at",
             "active",
         ]

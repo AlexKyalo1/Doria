@@ -13,6 +13,7 @@ const routeTitles = {
   "/settings": "Settings",
   "/dashboard": "Dashboard",
   "/admin/users": "Admin Users",
+  "/admin/security": "Security Control",
 };
 
 const BasePage = () => {
@@ -163,10 +164,16 @@ const BasePage = () => {
           </NavLink>
 
           {Boolean(currentUser?.is_staff) && (
-            <NavLink to="/admin/users" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-              <span style={linkIconStyle}>{"\ud83d\udee0\ufe0f"}</span>
-              {sidebarOpen && <span style={linkTextStyle}>Admin Users</span>}
-            </NavLink>
+            <>
+              <NavLink to="/admin/users" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+                <span style={linkIconStyle}>{"\ud83d\udee0\ufe0f"}</span>
+                {sidebarOpen && <span style={linkTextStyle}>Admin Users</span>}
+              </NavLink>
+              <NavLink to="/admin/security" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+                <span style={linkIconStyle}>{"\ud83d\udd10"}</span>
+                {sidebarOpen && <span style={linkTextStyle}>Security Control</span>}
+              </NavLink>
+            </>
           )}
 
           <NavLink to="/institutions" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
@@ -465,7 +472,3 @@ const contentWrapperStyle = {
 };
 
 export default BasePage;
-
-
-
-
