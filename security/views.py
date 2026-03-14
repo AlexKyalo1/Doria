@@ -1,15 +1,22 @@
-from django.shortcuts import render
 from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+
+from accounts.access import facility_scope_for_user
 from .models import SecurityFacility
 from .serializers import SecurityFacilitySerializer
 
-# Create your views here.
 
 class SecurityFacilityListCreateView(generics.ListCreateAPIView):
-    queryset = SecurityFacility.objects.all()
     serializer_class = SecurityFacilitySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return facility_scope_for_user(self.request.user).order_by("name")
+
 
 class SecurityFacilityDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = SecurityFacility.objects.all()
     serializer_class = SecurityFacilitySerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return facility_scope_for_user(self.request.user)
