@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.db.models import Count
 from django.conf import settings
 from django.http import JsonResponse
 from django.utils import timezone
@@ -26,6 +29,126 @@ INCIDENT_ANALYTICS_FALLBACK = {
     "recommended_queries": [],
 }
 
+
+def _date_range(start, end):
+    days = (end - start).days
+    return [start + timedelta(days=offset) for offset in range(days + 1)]
+
+
+def _build_ai_analytics(queryset, *, date_from=None, date_to=None):
+    today = timezone.now().date()
+    if date_to is None:
+        date_to = today
+    if date_from is None:
+        date_from = date_to - timedelta(days=30)
+
+    current_start = date_from
+    current_end = date_to
+    period_days = max(1, (current_end - current_start).days + 1)
+    prev_end = current_start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=period_days - 1)
+
+    current_qs = queryset.filter(occurred_at__date__gte=current_start, occurred_at__date__lte=current_end)
+    prev_qs = queryset.filter(occurred_at__date__gte=prev_start, occurred_at__date__lte=prev_end)
+
+    current_total = current_qs.count()
+    open_total = current_qs.filter(follow_up_status="open").count()
+    resolved_total = current_qs.filter(follow_up_status="resolved").count()
+
+    open_ages = []
+    for item in current_qs.filter(follow_up_status="open").values("occurred_at", "reported_at"):
+        occurred_at = item.get("occurred_at") or item.get("reported_at")
+        if occurred_at:
+            open_ages.append((today - occurred_at.date()).days)
+    avg_open_age = round(sum(open_ages) / len(open_ages), 1) if open_ages else 0
+
+    daily_counts_raw = current_qs.values("occurred_at__date").annotate(count=Count("id")).order_by("occurred_at__date")
+    daily_map = {row["occurred_at__date"].isoformat(): row["count"] for row in daily_counts_raw if row["occurred_at__date"]}
+    daily_counts = [
+        {"date": day.isoformat(), "count": daily_map.get(day.isoformat(), 0)}
+        for day in _date_range(current_start, current_end)
+    ]
+
+    current_types = {row["incident_type"] or "unknown": row["count"] for row in current_qs.values("incident_type").annotate(count=Count("id"))}
+    prev_types = {row["incident_type"] or "unknown": row["count"] for row in prev_qs.values("incident_type").annotate(count=Count("id"))}
+
+    type_trends = []
+    for incident_type, count in sorted(current_types.items(), key=lambda item: item[1], reverse=True):
+        prev_count = prev_types.get(incident_type, 0)
+        delta = count - prev_count
+        pct_change = round((delta / prev_count) * 100, 1) if prev_count else None
+        type_trends.append({
+            "incident_type": incident_type,
+            "current_count": count,
+            "previous_count": prev_count,
+            "delta": delta,
+            "pct_change": pct_change,
+        })
+
+    anomalies = []
+    for item in type_trends:
+        current_count = item["current_count"]
+        previous_count = item["previous_count"]
+        if previous_count == 0 and current_count >= 3:
+            anomalies.append({**item, "reason": "new_spike"})
+        elif previous_count > 0 and current_count >= max(3, previous_count * 2) and (current_count - previous_count) >= 3:
+            anomalies.append({**item, "reason": "surge"})
+
+    facility_rows = current_qs.values("facility_id", "facility__name", "follow_up_status", "occurred_at")
+    facility_stats = {}
+    for row in facility_rows:
+        facility_id = row["facility_id"] or "unassigned"
+        name = row.get("facility__name") or "Unassigned"
+        stats = facility_stats.setdefault(
+            facility_id,
+            {"facility_id": facility_id, "facility_name": name, "total": 0, "open": 0, "resolved": 0, "open_ages": []},
+        )
+        stats["total"] += 1
+        status = row.get("follow_up_status")
+        if status == "open":
+            stats["open"] += 1
+            occurred_at = row.get("occurred_at")
+            if occurred_at:
+                stats["open_ages"].append((today - occurred_at.date()).days)
+        elif status == "resolved":
+            stats["resolved"] += 1
+
+    facility_risk = []
+    for stats in facility_stats.values():
+        avg_age = round(sum(stats["open_ages"]) / len(stats["open_ages"]), 1) if stats["open_ages"] else 0
+        facility_risk.append({
+            "facility_id": stats["facility_id"],
+            "facility_name": stats["facility_name"],
+            "total_incidents": stats["total"],
+            "open_followups": stats["open"],
+            "resolved_followups": stats["resolved"],
+            "avg_open_age_days": avg_age,
+        })
+
+    facility_risk.sort(key=lambda item: (item["open_followups"], item["total_incidents"]), reverse=True)
+
+    return {
+        "period": {
+            "start": current_start.isoformat(),
+            "end": current_end.isoformat(),
+            "previous_start": prev_start.isoformat(),
+            "previous_end": prev_end.isoformat(),
+        },
+        "kpis": {
+            "total_incidents": current_total,
+            "open_followups": open_total,
+            "resolved_followups": resolved_total,
+            "resolution_rate": round((resolved_total / current_total) * 100, 1) if current_total else 0,
+            "avg_open_age_days": avg_open_age,
+            "incidents_last_7_days": queryset.filter(occurred_at__date__gte=today - timedelta(days=6)).count(),
+        },
+        "trends": {
+            "daily_counts": daily_counts,
+            "type_trends": type_trends,
+        },
+        "anomalies": anomalies,
+        "facility_risk": facility_risk,
+    }
 
 def _incident_scope_for_user(user):
     qs = Incident.objects.all()
@@ -86,6 +209,14 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return _incident_scope_for_user(self.request.user).distinct()
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        lookup = self.kwargs.get("pk")
+        decoded_id = decode_id(lookup)
+        if not decoded_id:
+            from django.http import Http404
+            raise Http404
+        return queryset.get(id=decoded_id)
     def update(self, request, *args, **kwargs):
         incident = self.get_object()
         follow_up_requested = any(
@@ -162,6 +293,9 @@ def incident_ai_insights_api(request):
         queryset = queryset.filter(facility_id=facility_id)
 
     incident_type = (payload.get("incident_type") or "").strip()
+
+    date_from = None
+    date_to = None
     if incident_type:
         queryset = queryset.filter(incident_type=incident_type)
 
@@ -187,8 +321,10 @@ def incident_ai_insights_api(request):
     max_records = max(1, min(max_records, 100))
     incidents = list(queryset.order_by("-occurred_at")[:max_records])
 
+    analytics = _build_ai_analytics(queryset, date_from=date_from, date_to=date_to)
     filters = {
-        "institution_id": institution_hash or None,        "facility_id": facility_id if facility_id else None,
+        "institution_id": institution_hash or None,
+        "facility_id": facility_id if facility_id else None,
         "incident_type": incident_type or None,
         "date_from": date_from_raw or None,
         "date_to": date_to_raw or None,
@@ -200,10 +336,11 @@ def incident_ai_insights_api(request):
             {
                 "insights": INCIDENT_ANALYTICS_FALLBACK,
                 "meta": {
-                    "incident_count": 0,
-                    "filters": filters,
-                    "model": None,
-                },
+                "incident_count": 0,
+                "filters": filters,
+                "model": None,
+            },
+            "analytics": analytics,
             },
             status=status.HTTP_200_OK,
         )
@@ -226,8 +363,23 @@ def incident_ai_insights_api(request):
                 "filters": filters,
                 "model": getattr(settings, "OPENAI_INCIDENT_INSIGHTS_MODEL", None),
             },
+            "analytics": analytics,
         },
         status=status.HTTP_200_OK,
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

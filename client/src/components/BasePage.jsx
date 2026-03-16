@@ -31,6 +31,60 @@ const BasePage = () => {
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [openGroups, setOpenGroups] = useState({
+    core: false,
+    operations: false,
+    account: false,
+    admin: false,
+  });
+
+  const navGroups = [
+    {
+      id: "core",
+      label: "Core",
+      icon: "\u{1F4CC}",
+      items: [
+        { to: "/dashboard", label: "Dashboard", icon: "\u{1F4CA}" },
+        { to: "/ai/insights", label: "AI Insights", icon: "\u{1F9E0}" },
+      ],
+    },
+    {
+      id: "operations",
+      label: "Operations",
+      icon: "\u{1F6E1}\u{FE0F}",
+      items: [
+        { to: "/incidents", label: "Incidents", icon: "\u{1F6A8}" },
+        { to: "/facilities", label: "Facilities", icon: "\u{1F4CD}" },
+        { to: "/facilities/map", label: "Facility Map", icon: "\u{1F5FA}\u{FE0F}" },
+        { to: "/institutions", label: "Institutions", icon: "\u{1F3DB}\u{FE0F}" },
+      ],
+    },
+    {
+      id: "account",
+      label: "Account",
+      icon: "\u{1F464}",
+      items: [
+        { to: "/profile", label: "Profile", icon: "\u{1F464}" },
+        { to: "/profile/update", label: "Edit Profile", icon: "\u{270E}" },
+        { to: "/settings", label: "Settings", icon: "\u{2699}\u{FE0F}" },
+      ],
+    },
+    {
+      id: "admin",
+      label: "Admin",
+      icon: "\u{1F6E0}\u{FE0F}",
+      items: [
+        { to: "/admin/users", label: "Admin Users", icon: "\u{1F6E0}\u{FE0F}" },
+        { to: "/admin/security", label: "Security Control", icon: "\u{1F510}" },
+      ],
+      gated: true,
+    },
+  ];
+
+  const toggleGroup = (groupId) => {
+    setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
   const [frontendSettings, setFrontendSettings] = useState(getFrontendSettings());
   const [currentUser, setCurrentUser] = useState(null);
   const [impersonationInfo, setImpersonationInfo] = useState(getImpersonationInfo());
@@ -166,8 +220,7 @@ const BasePage = () => {
         menuColor: "#166534",
         sidebarGradient: "linear-gradient(180deg, #0f5132 0%, #166534 100%)",
       };
-
-  return (
+return (
     <div style={{ ...containerStyle, backgroundColor: theme.mainBg }}>
       <aside
         style={{
@@ -179,67 +232,43 @@ const BasePage = () => {
       >
         <div style={logoContainerStyle}>
           <div style={logoWrapperStyle}>
-            <span style={logoIconStyle}>{"\ud83c\udf3f"}</span>
+            <span style={logoIconStyle}>🛡️</span>
             {sidebarOpen && <span style={logoTextStyle}>Doria</span>}
           </div>
         </div>
 
         <nav style={navStyle}>
-          <NavLink to="/profile" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83d\udc64"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Profile</span>}
-          </NavLink>
-
-          <NavLink to="/profile/update" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\u270e"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Edit Profile</span>}
-          </NavLink>
-
-          <NavLink to="/dashboard" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83d\udcca"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Dashboard</span>}
-          </NavLink>
-
-          <NavLink to="/ai/insights" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83e\udde0"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>AI Insights</span>}
-          </NavLink>
-
-          <NavLink to="/settings" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\u2699\ufe0f"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Settings</span>}
-          </NavLink>
-
-          {Boolean(currentUser?.is_staff) && (
+  {navGroups
+    .filter((group) => !group.gated || Boolean(currentUser?.is_staff))
+    .map((group) => (
+      <div key={group.id} style={groupBlockStyle}>
+        <button
+          type="button"
+          onClick={() => toggleGroup(group.id)}
+          style={groupHeaderStyle(sidebarOpen)}
+          aria-expanded={openGroups[group.id]}
+        >
+          <span style={linkIconStyle}>{group.icon}</span>
+          {sidebarOpen && (
             <>
-              <NavLink to="/admin/users" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-                <span style={linkIconStyle}>{"\ud83d\udee0\ufe0f"}</span>
-                {sidebarOpen && <span style={linkTextStyle}>Admin Users</span>}
-              </NavLink>
-              <NavLink to="/admin/security" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-                <span style={linkIconStyle}>{"\ud83d\udd10"}</span>
-                {sidebarOpen && <span style={linkTextStyle}>Security Control</span>}
-              </NavLink>
+              <span style={groupLabelStyle}>{group.label}</span>
+              <span style={groupChevronStyle}>{openGroups[group.id] ? "\u{1F53C}" : "\u{1F53D}"}</span>
             </>
           )}
-
-          <NavLink to="/institutions" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83c\udfdb\ufe0f"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Institutions</span>}
-          </NavLink>
-          <NavLink to="/facilities" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83d\udccd"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Facilities</span>}
-          </NavLink>
-          <NavLink to="/facilities/map" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83d\uddfa\ufe0f"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Facility Map</span>}
-          </NavLink>
-          <NavLink to="/incidents" style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
-            <span style={linkIconStyle}>{"\ud83d\udea8"}</span>
-            {sidebarOpen && <span style={linkTextStyle}>Incidents</span>}
-          </NavLink>
-        </nav>
+        </button> 
+        {openGroups[group.id] && (
+          <div style={groupItemsStyle}>
+            {group.items.map((item) => (
+              <NavLink key={item.to} to={item.to} style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+                <span style={linkIconStyle}>{item.icon}</span>
+                {sidebarOpen && <span style={linkTextStyle}>{item.label}</span>}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+</nav>
 
         {sidebarOpen && (
           <div style={sidebarFooterStyle}>
@@ -320,7 +349,7 @@ const BasePage = () => {
 const containerStyle = {
   display: "flex",
   height: "100vh",
-  fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
+  fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
 };
 
 const sidebarStyle = {
@@ -564,7 +593,74 @@ const contentWrapperStyle = {
   width: "100%",
 };
 
+
+const groupBlockStyle = {
+  marginBottom: "10px",
+};
+
+const groupHeaderStyle = (sidebarOpen) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  width: "100%",
+  padding: sidebarOpen ? "10px 12px" : "10px 0",
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: "12px",
+  color: "white",
+  cursor: "pointer",
+  justifyContent: sidebarOpen ? "space-between" : "center",
+});
+
+const groupLabelStyle = {
+  fontSize: "13px",
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  opacity: 0.85,
+};
+
+const groupChevronStyle = {
+  fontSize: "14px",
+  opacity: 0.8,
+};
+
+const groupItemsStyle = {
+  display: "grid",
+  gap: "4px",
+  marginTop: "6px",
+};
+
+
 export default BasePage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

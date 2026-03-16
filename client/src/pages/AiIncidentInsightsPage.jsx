@@ -37,6 +37,19 @@ const riskColors = {
   medium: { background: "#fef3c7", color: "#92400e" },
   high: { background: "#fee2e2", color: "#b91c1c" },
 };
+const formatPct = (value) => {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  return `${value}%`;
+};
+
+const formatNumber = (value) => {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  return Number(value).toLocaleString();
+};
 
 const AiIncidentInsightsPage = () => {
   const token = localStorage.getItem("access_token");
@@ -45,6 +58,10 @@ const AiIncidentInsightsPage = () => {
   const [facilities, setFacilities] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
   const [result, setResult] = useState(null);
+  const [drilldownItems, setDrilldownItems] = useState([]);
+  const [drilldownLabel, setDrilldownLabel] = useState("");
+  const [drilldownLoading, setDrilldownLoading] = useState(false);
+  const [drilldownError, setDrilldownError] = useState("");
   const [loading, setLoading] = useState(false);
   const [bootLoading, setBootLoading] = useState(true);
   const [error, setError] = useState("");
@@ -78,7 +95,9 @@ const AiIncidentInsightsPage = () => {
         if (facilitiesRes.ok) {
           const list = Array.isArray(facilityData) ? facilityData.filter(Boolean) : Array.isArray(facilityData.facilities) ? facilityData.facilities.filter(Boolean) : [];
           setFacilities(list);
-          if (list.length === 1 && !profileData.user?.is_staff) {           setFilters((prev) => ({ ...prev, facility_id: list[0].id }));          }
+          if (list.length === 1 && !profileData.user?.is_staff) {
+            setFilters((prev) => ({ ...prev, facility_id: list[0].id }));
+          }
         }
       } catch {
         setError("Failed to load AI insights workspace.");
@@ -94,6 +113,9 @@ const AiIncidentInsightsPage = () => {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setDrilldownItems([]);
+    setDrilldownLabel("");
+    setDrilldownError("");
     try {
       const res = await apiFetch(`${INCIDENTS_API}/ai-insights/`, {
         method: "POST",
@@ -117,6 +139,66 @@ const AiIncidentInsightsPage = () => {
   };
 
   const riskTone = riskColors[result?.insights?.risk_level] || riskColors.low;
+  const analytics = result?.analytics;
+
+  const runDrilldown = async (label, drillFilters) => {
+    setDrilldownLoading(true);
+    setDrilldownError("");
+    setDrilldownLabel(label);
+    try {
+      const res = await apiFetch(`${INCIDENTS_API}/`, { headers });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to load incidents for drilldown");
+      }
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data.incidents)
+          ? data.incidents
+          : Array.isArray(data.value)
+            ? data.value
+            : [];
+
+      const fromDate = filters.date_from ? new Date(filters.date_from) : null;
+      const toDate = filters.date_to ? new Date(filters.date_to) : null;
+
+      const filtered = list.filter((item) => {
+        if (drillFilters.facility_id) {
+          const facilityId = item.facility_id ?? item.facility;
+          if (String(facilityId) !== String(drillFilters.facility_id)) {
+            return false;
+          }
+        }
+        if (drillFilters.incident_type && item.incident_type !== drillFilters.incident_type) {
+          return false;
+        }
+        if (fromDate || toDate) {
+          const occurred = item.occurred_at ? new Date(item.occurred_at) : null;
+          if (!occurred) {
+            return false;
+          }
+          if (fromDate && occurred < fromDate) {
+            return false;
+          }
+          if (toDate) {
+            const end = new Date(toDate);
+            end.setHours(23, 59, 59, 999);
+            if (occurred > end) {
+              return false;
+            }
+          }
+        }
+        return true;
+      });
+
+      setDrilldownItems(filtered.slice(0, 100));
+    } catch (err) {
+      setDrilldownError(err.message || "Failed to load drilldown incidents");
+      setDrilldownItems([]);
+    } finally {
+      setDrilldownLoading(false);
+    }
+  };
 
   return (
     <div style={{ ...styles.page, backgroundColor: theme.pageBg }}>
@@ -212,7 +294,212 @@ const AiIncidentInsightsPage = () => {
       {error && <div style={styles.errorBanner}>{error}</div>}
       {bootLoading && <div style={styles.noteCard}>Loading AI insights workspace...</div>}
 
-      {result && !bootLoading && (
+      
+      {analytics && (
+        <section style={{ ...styles.resultsWrap, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div style={styles.resultsHeader}>
+            <div>
+              <h2 style={{ ...styles.sectionTitle, color: theme.text }}>Operational KPIs</h2>
+              <p style={{ ...styles.sectionMeta, color: theme.mutedText }}>
+                Reporting window: {analytics.period?.start} to {analytics.period?.end}
+              </p>
+            </div>
+          </div>
+
+          <div style={styles.kpiGrid}>
+            <div style={styles.kpiCard}>
+              <div style={styles.kpiLabel}>Total Incidents</div>
+              <div style={styles.kpiValue}>{formatNumber(analytics.kpis?.total_incidents)}</div>
+            </div>
+            <div style={styles.kpiCard}>
+              <div style={styles.kpiLabel}>Open Follow-ups</div>
+              <div style={styles.kpiValue}>{formatNumber(analytics.kpis?.open_followups)}</div>
+            </div>
+            <div style={styles.kpiCard}>
+              <div style={styles.kpiLabel}>Resolution Rate</div>
+              <div style={styles.kpiValue}>{formatPct(analytics.kpis?.resolution_rate)}</div>
+            </div>
+            <div style={styles.kpiCard}>
+              <div style={styles.kpiLabel}>Avg Open Age (Days)</div>
+              <div style={styles.kpiValue}>{formatNumber(analytics.kpis?.avg_open_age_days)}</div>
+            </div>
+            <div style={styles.kpiCard}>
+              <div style={styles.kpiLabel}>Incidents (7 Days)</div>
+              <div style={styles.kpiValue}>{formatNumber(analytics.kpis?.incidents_last_7_days)}</div>
+            </div>
+          </div>
+
+          <div style={styles.dualGrid}>
+            <div style={styles.panel}>
+              <h3 style={styles.panelTitle}>Daily Volume Trend</h3>
+              <div style={styles.sparkline}>
+                {(analytics.trends?.daily_counts || []).map((item) => (
+                  <div
+                    key={item.date}
+                    title={`${item.date}: ${item.count}`}
+                    style={{
+                      ...styles.sparklineBar,
+                      height: `${Math.max(6, item.count * 6)}px`,
+                    }}
+                  />
+                ))}
+              </div>
+              <div style={styles.smallNote}>Bars scale to daily counts in the selected window.</div>
+            </div>
+
+            <div style={styles.panel}>
+              <h3 style={styles.panelTitle}>Incident Type Trend</h3>
+              {(analytics.trends?.type_trends || []).length === 0 ? (
+                <div style={styles.emptySmall}>No trend data available.</div>
+              ) : (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Type</th>
+                      <th style={styles.th}>Current</th>
+                      <th style={styles.th}>Previous</th>
+                      <th style={styles.th}>Delta</th>
+                      <th style={styles.th}>Change</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.trends.type_trends.map((item) => (
+                      <tr key={item.incident_type}>
+                        <td style={styles.td}>{item.incident_type}</td>
+                        <td style={styles.td}>{item.current_count}</td>
+                        <td style={styles.td}>{item.previous_count}</td>
+                        <td style={styles.td}>{item.delta}</td>
+                        <td style={styles.td}>{formatPct(item.pct_change)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div style={styles.dualGrid}>
+            <div style={styles.panel}>
+              <h3 style={styles.panelTitle}>Anomaly Signals</h3>
+              {(analytics.anomalies || []).length === 0 ? (
+                <div style={styles.emptySmall}>No spikes detected for this period.</div>
+              ) : (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Type</th>
+                      <th style={styles.th}>Current</th>
+                      <th style={styles.th}>Previous</th>
+                      <th style={styles.th}>Reason</th>
+                      <th style={styles.th}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.anomalies.map((item) => (
+                      <tr key={`${item.incident_type}-${item.reason}`}>
+                        <td style={styles.td}>{item.incident_type}</td>
+                        <td style={styles.td}>{item.current_count}</td>
+                        <td style={styles.td}>{item.previous_count}</td>
+                        <td style={styles.td}>{item.reason.replace("_", " ")}</td>
+                        <td style={styles.td}>
+                          <button
+                            style={styles.smallButton}
+                            onClick={() =>
+                              runDrilldown(`Spike: ${item.incident_type}`, {
+                                incident_type: item.incident_type,
+                              })
+                            }
+                          >
+                            View Incidents
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div style={styles.panel}>
+              <h3 style={styles.panelTitle}>Facility Risk Heat</h3>
+              {(analytics.facility_risk || []).length === 0 ? (
+                <div style={styles.emptySmall}>No facility data available.</div>
+              ) : (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Facility</th>
+                      <th style={styles.th}>Total</th>
+                      <th style={styles.th}>Open</th>
+                      <th style={styles.th}>Avg Open Age</th>
+                      <th style={styles.th}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.facility_risk.map((item) => (
+                      <tr key={item.facility_id}>
+                        <td style={styles.td}>{item.facility_name}</td>
+                        <td style={styles.td}>{item.total_incidents}</td>
+                        <td style={styles.td}>{item.open_followups}</td>
+                        <td style={styles.td}>{item.avg_open_age_days} days</td>
+                        <td style={styles.td}>
+                          <button
+                            style={styles.smallButton}
+                            onClick={() =>
+                              runDrilldown(`Facility: ${item.facility_name}`, {
+                                facility_id: item.facility_id === "unassigned" ? null : item.facility_id,
+                              })
+                            }
+                          >
+                            View Incidents
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div style={styles.panel}>
+            <h3 style={styles.panelTitle}>Drilldown Results</h3>
+            {drilldownLoading && <div style={styles.emptySmall}>Loading incidents...</div>}
+            {drilldownError && <div style={styles.errorBanner}>{drilldownError}</div>}
+            {!drilldownLoading && !drilldownError && drilldownItems.length === 0 && (
+              <div style={styles.emptySmall}>Select a drilldown action to see matching incidents.</div>
+            )}
+            {drilldownItems.length > 0 && (
+              <>
+                <div style={styles.smallNote}>{drilldownLabel}</div>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>OB</th>
+                      <th style={styles.th}>Type</th>
+                      <th style={styles.th}>Facility</th>
+                      <th style={styles.th}>Occurred</th>
+                      <th style={styles.th}>Follow-up</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {drilldownItems.map((item) => (
+                      <tr key={item.id}>
+                        <td style={styles.td}>{item.ob_number}</td>
+                        <td style={styles.td}>{item.incident_type}</td>
+                        <td style={styles.td}>{item.facility_name || item.facility || "-"}</td>
+                        <td style={styles.td}>{item.occurred_at}</td>
+                        <td style={styles.td}>{item.follow_up_status || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+{result && !bootLoading && (
         <section style={{ ...styles.resultsWrap, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <div style={styles.resultsHeader}>
             <div>
@@ -393,12 +680,59 @@ const styles = {
     backgroundColor: "#fef2f2",
     color: "#991b1b",
   },
-  noteCard: {
+    noteCard: {
     border: "1px dashed #cbd5e1",
     borderRadius: "14px",
     padding: "16px",
     color: "#64748b",
     backgroundColor: "#f8fafc",
+  },
+  kpiGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: "12px",
+  },
+  kpiCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "14px",
+    padding: "12px",
+    backgroundColor: "#fff",
+  },
+  kpiLabel: {
+    fontSize: "12px",
+    fontWeight: 600,
+    color: "#64748b",
+  },
+  kpiValue: {
+    fontSize: "20px",
+    fontWeight: 700,
+    color: "#0f172a",
+    marginTop: "6px",
+  },
+  sparkline: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: "4px",
+    minHeight: "80px",
+  },
+  sparklineBar: {
+    width: "8px",
+    borderRadius: "6px",
+    backgroundColor: "#16a34a",
+  },
+  smallNote: {
+    marginTop: "8px",
+    fontSize: "12px",
+    color: "#64748b",
+  },
+  smallButton: {
+    padding: "6px 10px",
+    fontSize: "12px",
+    borderRadius: "6px",
+    border: "1px solid #0f766e",
+    backgroundColor: "#0f766e",
+    color: "#fff",
+    cursor: "pointer",
   },
   resultsWrap: {
     border: "1px solid #d0e6d2",
@@ -503,6 +837,18 @@ const styles = {
 };
 
 export default AiIncidentInsightsPage;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
