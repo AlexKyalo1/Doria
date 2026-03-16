@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from utils.hashid import decode_id, encode_id
 from security.models import SecurityFacility
@@ -144,6 +145,9 @@ def _can_manage_members(user, institution):
 def _require_site_admin(user):
     return bool(user and user.is_authenticated and user.is_staff)
 
+def _require_super_admin(user):
+    return bool(user and user.is_authenticated and user.is_superuser)
+
 
 
 def _get_facility_from_hash(facility_hash):
@@ -244,6 +248,42 @@ def admin_user_detail_api(request, user_id):
 
     serializer.save()
     return Response({"user": serializer.data}, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def admin_user_impersonate_api(request, user_id):
+    if not _require_super_admin(request.user):
+        return Response({"error": "Super admin access required"}, status=status.HTTP_403_FORBIDDEN)
+
+    target_id = decode_id(user_id)
+    if not target_id:
+        return Response({"error": "Invalid user ID"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        target_user = User.objects.get(id=target_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if not target_user.is_active:
+        return Response({"error": "Cannot impersonate an inactive user"}, status=status.HTTP_400_BAD_REQUEST)
+
+    refresh = RefreshToken.for_user(target_user)
+
+    return Response(
+        {
+            "message": "Impersonation successful",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "impersonated_user": AdminUserSerializer(target_user).data,
+            "impersonator": {
+                "id": encode_id(request.user.id),
+                "username": request.user.username,
+                "is_superuser": request.user.is_superuser,
+                "is_staff": request.user.is_staff,
+            },
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST", "GET"])
@@ -510,3 +550,5 @@ def facility_members_list_api(request, facility_id):
         },
         status=status.HTTP_200_OK,
     )
+
+

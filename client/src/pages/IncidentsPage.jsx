@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
 import { apiFetch } from "../utils/apiFetch";
 
@@ -25,7 +25,6 @@ const getDefaultOccurredAt = () => {
 };
 
 const defaultIncidentForm = {
-  institution_id: "",
   facility_id: "",
   incident_type: "robbery",
   ob_number: "",
@@ -113,10 +112,9 @@ const IncidentsPage = () => {
   const { theme, isDark } = useColorMode();
 
   const [profile, setProfile] = useState(null);
-  const [institutions, setInstitutions] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [incidents, setIncidents] = useState([]);
-  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
+  const [selectedFacilityId, setSelectedFacilityId] = useState("");
   const [incidentForm, setIncidentForm] = useState(defaultIncidentForm);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -254,29 +252,7 @@ const IncidentsPage = () => {
     setProfile(data.user || null);
     return data.user || null;
   };
-
-  const loadInstitutions = async (user) => {
-    const scope = user?.is_staff ? "?scope=all" : "";
-    const res = await apiFetch(`${ACCOUNTS_API}/institutions/${scope}`, { headers });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(getErrorMessage(data, "Failed to load institutions"));
-    }
-
-    const list = data.institutions || [];
-    setInstitutions(list);
-
-    if (list.length > 0) {
-      const defaultInstitutionId = String(list[0].id);
-      setSelectedInstitutionId((prev) => (prev ? String(prev) : defaultInstitutionId));
-      setIncidentForm((prev) => ({
-        ...prev,
-        institution_id: prev.institution_id || defaultInstitutionId,
-      }));
-    }
-  };
-
-  const loadFacilities = async () => {
+  const loadFacilities = async (user) => {
     const res = await apiFetch(`${SECURITY_API}/facilities/`, { headers });
     const data = await res.json();
     if (!res.ok) {
@@ -285,8 +261,16 @@ const IncidentsPage = () => {
 
     const list = Array.isArray(data) ? data.filter(Boolean) : Array.isArray(data.facilities) ? data.facilities.filter(Boolean) : [];
     setFacilities(list);
-  };
 
+    if (list.length > 0 && !user?.is_staff) {
+      const defaultFacilityId = String(list[0].id);
+      setSelectedFacilityId((prev) => (prev ? String(prev) : defaultFacilityId));
+      setIncidentForm((prev) => ({
+        ...prev,
+        facility_id: prev.facility_id || defaultFacilityId,
+      }));
+    }
+  };
   const loadIncidents = async () => {
     const res = await apiFetch(`${INCIDENTS_API}/`, { headers });
     const data = await res.json();
@@ -394,7 +378,7 @@ const IncidentsPage = () => {
       try {
         setLoading(true);
         const user = await loadProfile();
-        await Promise.all([loadInstitutions(user), loadFacilities(), loadIncidents()]);
+        await Promise.all([loadFacilities(user), loadIncidents()]);
         showBanner("success", "Incident workspace ready.");
       } catch (error) {
         showBanner("error", error.message || "Failed to load incident workspace");
@@ -406,40 +390,32 @@ const IncidentsPage = () => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-
   useEffect(() => {
-    if (!selectedInstitutionId) {
+    if (!selectedFacilityId) {
       return;
     }
     setIncidentForm((prev) => ({
       ...prev,
-      institution_id: prev.institution_id || String(selectedInstitutionId),
+      facility_id: prev.facility_id || String(selectedFacilityId),
     }));
-  }, [selectedInstitutionId]);
+  }, [selectedFacilityId]);
 
 
   const filteredFacilities = useMemo(() => {
-    const list = facilities.filter(Boolean);
-    if (!selectedInstitutionId) {
-      return list;
-    }
-    return list.filter((facility) =>
-      facility.institution_id == null ||
-      String(facility.institution_id) === String(selectedInstitutionId)
-    );
-  }, [facilities, selectedInstitutionId]);
+    return facilities.filter(Boolean);
+  }, [facilities]);
 
 
   const filteredIncidents = useMemo(() => {
     const list = incidents.filter(Boolean);
-    if (!selectedInstitutionId) {
+    if (!selectedFacilityId) {
       return list;
     }
-    return list.filter(
-      (incident) => incident.institution_id == null || String(incident.institution_id) === String(selectedInstitutionId)
-    );
-  }, [incidents, selectedInstitutionId]);
-
+    return list.filter((incident) => {
+      const facilityId = incident.facility_id ?? incident.facility ?? "";
+      return String(facilityId) === String(selectedFacilityId);
+    });
+  }, [incidents, selectedFacilityId]);
 
   const previewCenter = useMemo(() => {
     const lat = parseCoord(incidentForm.latitude);
@@ -495,15 +471,10 @@ const IncidentsPage = () => {
 
   const createIncident = async (event) => {
     event.preventDefault();
-
-    const institutionValue = incidentForm.institution_id || selectedInstitutionId || institutions[0]?.id || "";
-    const facilityValue = incidentForm.facility_id;
-    const institutionId = Number(institutionValue);
+    const facilityValue = incidentForm.facility_id || selectedFacilityId || "";
     const facilityId = facilityValue ? Number(facilityValue) : null;
-
     
     const payload = {
-      institution: institutionId,
       facility: facilityId,
       incident_type: incidentForm.incident_type,
       ob_number: incidentForm.ob_number.trim(),
@@ -531,10 +502,9 @@ const IncidentsPage = () => {
       } else {
         await loadIncidents();
       }
-
-      setIncidentForm((prev) => ({
+            setIncidentForm((prev) => ({
         ...defaultIncidentForm,
-        institution_id: prev.institution_id || selectedInstitutionId,
+        facility_id: prev.facility_id || selectedFacilityId,
         occurred_at: getDefaultOccurredAt(),
       }));
       showBanner("success", "Incident created successfully.");
@@ -562,16 +532,16 @@ const IncidentsPage = () => {
         <div style={styles.headerControls}>
           <select
             style={styles.filterSelect}
-            value={selectedInstitutionId}
+            value={selectedFacilityId}
             onChange={(event) => {
-              setSelectedInstitutionId(event.target.value);
-              setIncidentForm((prev) => ({ ...prev, institution_id: event.target.value, facility_id: "" }));
+              setSelectedFacilityId(event.target.value);
+              setIncidentForm((prev) => ({ ...prev, facility_id: event.target.value }));
             }}
           >
-            {isAdmin && <option value="">All Institutions</option>}
-            {institutions.map((institution) => (
-              <option key={institution.id} value={String(institution.id)}>
-                {institution.name}
+            {isAdmin && <option value="">All Facilities</option>}
+            {facilities.map((facility) => (
+              <option key={facility.id} value={String(facility.id)}>
+                {facility.name}
               </option>
             ))}
           </select>
@@ -582,38 +552,16 @@ const IncidentsPage = () => {
 
       <section style={styles.card}>
         <h2 style={styles.cardTitle}>Add Incident</h2>
-        <p style={styles.hint}>Incidents are linked to the selected institution.</p>
+        <p style={styles.hint}>Incidents are linked to the selected facility.</p>
         <form onSubmit={createIncident} style={styles.formLayout}>
           <div style={styles.formFields}>
             <div>
-              <label style={styles.label}>Institution</label>
+              <label style={styles.label}>Facility</label>
               <select
                 style={styles.input}
-                value={incidentForm.institution_id || selectedInstitutionId}
-                onChange={(event) =>
-                  setIncidentForm((prev) => ({
-                    ...prev,
-                    institution_id: event.target.value,
-                    facility_id: "",
-                  }))
-                }
-                required
-              >
-                <option value="">Select institution</option>
-                {institutions.map((institution) => (
-                  <option key={institution.id} value={String(institution.id)}>
-                    {institution.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={styles.label}>Facility (optional)</label>
-              <select
-                style={styles.input}
-                value={incidentForm.facility_id}
+                value={incidentForm.facility_id || selectedFacilityId}
                 onChange={(event) => setIncidentForm((prev) => ({ ...prev, facility_id: event.target.value }))}
+                required
               >
                 <option value="">Select facility</option>
                 {filteredFacilities.map((facility) => (
@@ -660,7 +608,8 @@ const IncidentsPage = () => {
                 onChange={(event) => setIncidentForm((prev) => ({ ...prev, occurred_at: event.target.value }))}
                 required
               />
-            </div><div style={styles.formFullWidth}>
+            </div>
+            <div style={styles.formFullWidth}>
               <label style={styles.label}>Description</label>
               <textarea
                 style={{ ...styles.input, minHeight: "90px" }}
@@ -723,7 +672,7 @@ const IncidentsPage = () => {
         {loading ? (
           <p style={styles.muted}>Loading incidents...</p>
         ) : filteredIncidents.length === 0 ? (
-          <p style={styles.muted}>No incidents found for the selected institution.</p>
+          <p style={styles.muted}>No incidents found for the selected facility.</p>
         ) : (
           <div style={styles.tableWrap}>
             <table style={styles.table}>
@@ -749,8 +698,9 @@ const IncidentsPage = () => {
                     </td>
                     <td style={styles.td}>
                       {(profile?.is_staff ||
-                        String(incident.institution_id || "") ===
-                          String(selectedInstitutionId || "")) && (
+                        (selectedFacilityId &&
+                          String(incident.facility_id ?? incident.facility ?? "") ===
+                            String(selectedFacilityId))) && (
                         <button style={styles.smallButton} onClick={() => openFollowUp(incident)}>
                           View / Update
                         </button>
@@ -1089,6 +1039,41 @@ const styles = {
 };
 
 export default IncidentsPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

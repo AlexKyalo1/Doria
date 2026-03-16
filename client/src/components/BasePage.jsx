@@ -18,9 +18,22 @@ const routeTitles = {
 };
 
 const BasePage = () => {
+  const getImpersonationInfo = () => {
+    const impersonatorToken = localStorage.getItem("impersonator_access_token");
+    if (!impersonatorToken) return null;
+    let impersonatedUser = null;
+    try {
+      impersonatedUser = JSON.parse(localStorage.getItem("impersonated_user") || "null");
+    } catch {
+      impersonatedUser = null;
+    }
+    return { impersonatedUser };
+  };
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [frontendSettings, setFrontendSettings] = useState(getFrontendSettings());
   const [currentUser, setCurrentUser] = useState(null);
+  const [impersonationInfo, setImpersonationInfo] = useState(getImpersonationInfo());
   const location = useLocation();
 
   useEffect(() => {
@@ -34,6 +47,10 @@ const BasePage = () => {
   useEffect(() => {
     applyColorMode(frontendSettings.colorMode);
   }, [frontendSettings.colorMode]);
+
+  useEffect(() => {
+    setImpersonationInfo(getImpersonationInfo());
+  }, [location.pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -67,9 +84,33 @@ const BasePage = () => {
     fetchCurrentUser();
   }, []);
 
+  const stopImpersonation = () => {
+    const adminAccess = localStorage.getItem("impersonator_access_token");
+    const adminRefresh = localStorage.getItem("impersonator_refresh_token");
+
+    if (adminAccess && adminRefresh) {
+      localStorage.setItem("access_token", adminAccess);
+      localStorage.setItem("refresh_token", adminRefresh);
+    } else {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
+
+    localStorage.removeItem("impersonator_access_token");
+    localStorage.removeItem("impersonator_refresh_token");
+    localStorage.removeItem("impersonator_user");
+    localStorage.removeItem("impersonated_user");
+
+    window.location.href = "/admin/users";
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("impersonator_access_token");
+    localStorage.removeItem("impersonator_refresh_token");
+    localStorage.removeItem("impersonator_user");
+    localStorage.removeItem("impersonated_user");
     window.location.href = "/";
   };
 
@@ -237,21 +278,33 @@ const BasePage = () => {
             <span style={{ ...pageTitleStyle, color: theme.pageTitle }}>{pageTitle}</span>
           </div>
 
-          <button
-            onClick={handleLogout}
-            style={logoutButtonStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#9a2b2b";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#842029";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            <span style={logoutIconStyle}>{"\ud83d\udeaa"}</span>
-            Logout
-          </button>
+          <div style={headerRightStyle}>
+            {impersonationInfo && (
+              <div style={impersonationBannerStyle}>
+                <span style={impersonationTextStyle}>
+                  Impersonating {impersonationInfo.impersonatedUser?.username || "user"}
+                </span>
+                <button onClick={stopImpersonation} style={impersonationButtonStyle}>
+                  Return to Admin
+                </button>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              style={logoutButtonStyle}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#9a2b2b";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#842029";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span style={logoutIconStyle}>{"\ud83d\udeaa"}</span>
+              Logout
+            </button>
+          </div>
         </header>
 
         <main style={dynamicContentStyle}>
@@ -425,6 +478,40 @@ const headerLeftStyle = {
   gap: "20px",
 };
 
+const headerRightStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+};
+
+const impersonationBannerStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  padding: "8px 12px",
+  backgroundColor: "#fff7ed",
+  border: "1px solid #fed7aa",
+  borderRadius: "12px",
+  color: "#9a3412",
+  fontSize: "13px",
+  fontWeight: "600",
+};
+
+const impersonationTextStyle = {
+  whiteSpace: "nowrap",
+};
+
+const impersonationButtonStyle = {
+  backgroundColor: "#ea580c",
+  color: "white",
+  border: "none",
+  borderRadius: "10px",
+  padding: "6px 10px",
+  fontSize: "12px",
+  fontWeight: "600",
+  cursor: "pointer",
+};
+
 const menuButtonStyle = {
   background: "none",
   border: "none",
@@ -478,3 +565,13 @@ const contentWrapperStyle = {
 };
 
 export default BasePage;
+
+
+
+
+
+
+
+
+
+

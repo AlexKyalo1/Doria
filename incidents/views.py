@@ -153,6 +153,13 @@ def incident_ai_insights_api(request):
         if not institution_id:
             return Response({"error": "Invalid institution id"}, status=status.HTTP_400_BAD_REQUEST)
         queryset = queryset.filter(institution_id=institution_id)
+    facility_id = payload.get("facility_id")
+    if facility_id:
+        try:
+            facility_id = int(facility_id)
+        except (TypeError, ValueError):
+            return Response({"error": "Invalid facility id"}, status=status.HTTP_400_BAD_REQUEST)
+        queryset = queryset.filter(facility_id=facility_id)
 
     incident_type = (payload.get("incident_type") or "").strip()
     if incident_type:
@@ -181,7 +188,7 @@ def incident_ai_insights_api(request):
     incidents = list(queryset.order_by("-occurred_at")[:max_records])
 
     filters = {
-        "institution_id": institution_hash or None,
+        "institution_id": institution_hash or None,        "facility_id": facility_id if facility_id else None,
         "incident_type": incident_type or None,
         "date_from": date_from_raw or None,
         "date_to": date_to_raw or None,
@@ -222,3 +229,5 @@ def incident_ai_insights_api(request):
         },
         status=status.HTTP_200_OK,
     )
+
+

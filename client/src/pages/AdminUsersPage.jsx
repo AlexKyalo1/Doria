@@ -14,6 +14,8 @@ const AdminUsersPage = () => {
   const [error, setError] = useState("");
   const [updatingUsers, setUpdatingUsers] = useState({});
   const [deletingUsers, setDeletingUsers] = useState({});
+  const [impersonatingUsers, setImpersonatingUsers] = useState({});
+  const [currentUser, setCurrentUser] = useState(null);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -70,6 +72,28 @@ const AdminUsersPage = () => {
     fetchUsers();
   }, [fetchUsers]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await apiFetch(`${API_BASE}/profile/`, {
+          method: "GET",
+          headers,
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    fetchCurrentUser();
+  }, [token, headers]);
+
   const updateUser = async (userId, payload) => {
     setUpdatingUsers((prev) => ({ ...prev, [userId]: true }));
     try {
@@ -116,6 +140,42 @@ const AdminUsersPage = () => {
       alert(`Failed to delete user: ${err.message}`);
     } finally {
       setDeletingUsers((prev) => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  const impersonateUser = async (userId, username) => {
+    const confirmed = window.confirm(`Login as "${username}"?`);
+    if (!confirmed) return;
+
+    setImpersonatingUsers((prev) => ({ ...prev, [userId]: true }));
+    try {
+      const res = await apiFetch(`${API_BASE}/admin/users/${userId}/impersonate/`, {
+        method: "POST",
+        headers,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to impersonate user");
+      }
+
+      if (!localStorage.getItem("impersonator_access_token")) {
+        localStorage.setItem("impersonator_access_token", localStorage.getItem("access_token") || "");
+        localStorage.setItem("impersonator_refresh_token", localStorage.getItem("refresh_token") || "");
+        if (currentUser) {
+          localStorage.setItem("impersonator_user", JSON.stringify(currentUser));
+        }
+      }
+
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      localStorage.setItem("impersonated_user", JSON.stringify(data.impersonated_user || { username }));
+
+      window.location.href = "/profile";
+    } catch (err) {
+      alert(`Failed to impersonate user: ${err.message}`);
+    } finally {
+      setImpersonatingUsers((prev) => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -494,6 +554,16 @@ const AdminUsersPage = () => {
                         <button className="icon-btn edit" onClick={() => openEditModal(user)} title="Edit user" disabled={isDeleting}>
                           {"\u270e"}
                         </button>
+                        {!user.is_superuser && (
+                          <button
+                            className="icon-btn impersonate"
+                            onClick={() => impersonateUser(user.id, user.username)}
+                            disabled={isUpdating || isDeleting || impersonatingUsers[user.id]}
+                            title="Login as user"
+                          >
+                            {impersonatingUsers[user.id] ? "..." : "\u21aa"}
+                          </button>
+                        )}
                         <button
                           className="icon-btn delete"
                           onClick={() => deleteUser(user.id, user.username)}
@@ -593,3 +663,21 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

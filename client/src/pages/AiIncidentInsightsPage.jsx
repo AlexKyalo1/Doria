@@ -4,6 +4,7 @@ import { apiFetch } from "../utils/apiFetch";
 import { useColorMode } from "../utils/useColorMode";
 
 const ACCOUNTS_API = "http://127.0.0.1:8000/api/accounts";
+const SECURITY_API = "http://127.0.0.1:8000/api/security";
 const INCIDENTS_API = "http://127.0.0.1:8000/api/incidents";
 
 const INCIDENT_TYPES = [
@@ -24,7 +25,7 @@ prior.setDate(prior.getDate() - 30);
 const formatDate = (value) => value.toISOString().slice(0, 10);
 
 const defaultFilters = {
-  institution_id: "",
+  facility_id: "",
   incident_type: "",
   date_from: formatDate(prior),
   date_to: formatDate(today),
@@ -41,7 +42,7 @@ const AiIncidentInsightsPage = () => {
   const token = localStorage.getItem("access_token");
   const { theme } = useColorMode();
   const [profile, setProfile] = useState(null);
-  const [institutions, setInstitutions] = useState([]);
+  const [facilities, setFacilities] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -64,22 +65,20 @@ const AiIncidentInsightsPage = () => {
 
     const load = async () => {
       try {
-        const [profileRes, institutionsRes] = await Promise.all([
+        const [profileRes, facilitiesRes] = await Promise.all([
           apiFetch(`${ACCOUNTS_API}/profile/`, { headers }),
-          apiFetch(`${ACCOUNTS_API}/institutions/`, { headers }),
+          apiFetch(`${SECURITY_API}/facilities/`, { headers }),
         ]);
         const profileData = await profileRes.json();
-        const institutionData = await institutionsRes.json();
+        const facilityData = await facilitiesRes.json();
 
         if (profileRes.ok) {
           setProfile(profileData.user || null);
         }
-        if (institutionsRes.ok) {
-          const list = institutionData.institutions || [];
-          setInstitutions(list);
-          if (list.length === 1) {
-            setFilters((prev) => ({ ...prev, institution_id: list[0].id }));
-          }
+        if (facilitiesRes.ok) {
+          const list = Array.isArray(facilityData) ? facilityData.filter(Boolean) : Array.isArray(facilityData.facilities) ? facilityData.facilities.filter(Boolean) : [];
+          setFacilities(list);
+          if (list.length === 1 && !profileData.user?.is_staff) {           setFilters((prev) => ({ ...prev, facility_id: list[0].id }));          }
         }
       } catch {
         setError("Failed to load AI insights workspace.");
@@ -140,16 +139,16 @@ const AiIncidentInsightsPage = () => {
       <section style={{ ...styles.formCard, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <form onSubmit={runInsights} style={styles.formGrid}>
           <div style={styles.field}>
-            <label style={styles.label}>Institution</label>
+            <label style={styles.label}>Facility</label>
             <select
-              value={filters.institution_id}
-              onChange={(event) => setFilters((prev) => ({ ...prev, institution_id: event.target.value }))}
+              value={filters.facility_id}
+              onChange={(event) => setFilters((prev) => ({ ...prev, facility_id: event.target.value }))}
               style={styles.input}
             >
-              <option value="">All visible institutions</option>
-              {institutions.map((institution) => (
-                <option key={institution.id} value={institution.id}>
-                  {institution.name}
+              <option value="">All visible facilities</option>
+              {facilities.map((facility) => (
+                <option key={facility.id} value={facility.id}>
+                  {facility.name}
                 </option>
               ))}
             </select>
@@ -504,3 +503,7 @@ const styles = {
 };
 
 export default AiIncidentInsightsPage;
+
+
+
+

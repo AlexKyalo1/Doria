@@ -110,6 +110,36 @@ def _extract_text(payload):
     raise IncidentInsightsError("OpenAI response did not include structured text output")
 
 
+def _extract_chat_text(payload):
+    choices = payload.get("choices") or []
+    if not choices:
+        raise IncidentInsightsError("OpenAI response did not include choices")
+    message = choices[0].get("message") or {}
+    content = message.get("content")
+    if isinstance(content, str) and content.strip():
+        return content
+    raise IncidentInsightsError("OpenAI response did not include message content")
+
+
+def _coerce_json(text):
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        if len(lines) >= 2 and lines[0].startswith("```"):
+            cleaned = "\n".join(lines[1:])
+            if cleaned.rstrip().endswith("```"):
+                cleaned = cleaned.rstrip()[:-3]
+            cleaned = cleaned.strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            return json.loads(cleaned[start:end + 1])
+        raise
+
+
 def generate_incident_insights(*, incidents, filters, actor_label):
     api_key = getattr(settings, "OPENAI_API_KEY", "")
     if not api_key:
@@ -117,6 +147,7 @@ def generate_incident_insights(*, incidents, filters, actor_label):
 
     api_base = getattr(settings, "OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
     model = getattr(settings, "OPENAI_INCIDENT_INSIGHTS_MODEL", "gpt-4o-mini")
+    use_chat_completions = "deepseek" in api_base.lower()
 
     serialized_incidents = [_serialize_incident(incident) for incident in incidents]
     user_payload = {
@@ -126,30 +157,49 @@ def generate_incident_insights(*, incidents, filters, actor_label):
         "incidents": serialized_incidents,
     }
 
-    body = {
-        "model": model,
-        "input": [
-            {
-                "role": "system",
-                "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
+    if use_chat_completions:
+        body = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": (
+                        "Return ONLY valid JSON matching this schema:\n"
+                        f"{json.dumps(INCIDENT_INSIGHTS_SCHEMA)}\n\n"
+                        f"Input data:\n{json.dumps(user_payload)}"
+                    ),
+                },
+            ],
+            "stream": False,
+        }
+        endpoint = f"{api_base}/chat/completions"
+    else:
+        body = {
+            "model": model,
+            "input": [
+                {
+                    "role": "system",
+                    "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": json.dumps(user_payload)}],
+                },
+            ],
+            "text": {
+                "format": {
+                    "type": "json_schema",
+                    "name": "incident_insights",
+                    "schema": INCIDENT_INSIGHTS_SCHEMA,
+                    "strict": True,
+                }
             },
-            {
-                "role": "user",
-                "content": [{"type": "input_text", "text": json.dumps(user_payload)}],
-            },
-        ],
-        "text": {
-            "format": {
-                "type": "json_schema",
-                "name": "incident_insights",
-                "schema": INCIDENT_INSIGHTS_SCHEMA,
-                "strict": True,
-            }
-        },
-    }
+        }
+        endpoint = f"{api_base}/responses"
 
     http_request = request.Request(
-        url=f"{api_base}/responses",
+        url=endpoint,
         data=json.dumps(body).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {api_key}",
@@ -168,6 +218,9 @@ def generate_incident_insights(*, incidents, filters, actor_label):
         raise IncidentInsightsError(f"OpenAI connection failed: {exc.reason}") from exc
 
     try:
-        return json.loads(_extract_text(payload))
+        text = _extract_chat_text(payload) if use_chat_completions else _extract_text(payload)
+        return _coerce_json(text)
     except json.JSONDecodeError as exc:
         raise IncidentInsightsError("OpenAI returned malformed JSON for incident insights") from exc
+
+
