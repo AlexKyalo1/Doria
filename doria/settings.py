@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'security',
     'incidents',
     'accounts',
+    'billing',
     'rest_framework',
 ]
 
@@ -84,6 +85,18 @@ SIMPLE_JWT = {
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 OPENAI_INCIDENT_INSIGHTS_MODEL = os.getenv("OPENAI_INCIDENT_INSIGHTS_MODEL", "gpt-4o-mini")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+BILLING_PROVIDER_DEFAULT = os.getenv("BILLING_PROVIDER_DEFAULT", "stripe")
+BILLING_STRIPE_SUCCESS_URL = os.getenv(
+    "BILLING_STRIPE_SUCCESS_URL",
+    "http://localhost:3000/settings?billing=success",
+)
+BILLING_STRIPE_CANCEL_URL = os.getenv(
+    "BILLING_STRIPE_CANCEL_URL",
+    "http://localhost:3000/settings?billing=cancel",
+)
 
 SECURITY_RESPONSE_RULES = {
     404: {
@@ -180,4 +193,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 

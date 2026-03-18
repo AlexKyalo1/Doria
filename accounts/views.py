@@ -12,6 +12,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from utils.hashid import decode_id, encode_id
 from security.models import SecurityFacility
+from billing.services.entitlements import (
+    BillingLimitError,
+    assert_member_limit_available,
+    ensure_subscription_for_institution,
+)
 from .models import Institution, InstitutionMembership, FacilityMembership
 from .serializers import (
     AddInstitutionMemberSerializer,
@@ -301,6 +306,7 @@ def institutions_collection_api(request):
             user=request.user,
             defaults={"role": "admin"},
         )
+        ensure_subscription_for_institution(institution)
 
         return Response(
             {"institution": InstitutionSerializer(institution).data},
@@ -362,13 +368,11 @@ def institution_members_api(request, institution_id):
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    membership, created = InstitutionMembership.objects.get_or_create(
+    membership = InstitutionMembership.objects.filter(
         institution=institution,
         user=user,
-        defaults={"role": role},
-    )
-
-    if not created:
+    ).first()
+    if membership:
         return Response(
             {
                 "message": "User already a member",
@@ -377,6 +381,16 @@ def institution_members_api(request, institution_id):
             status=status.HTTP_200_OK,
         )
 
+    try:
+        assert_member_limit_available(institution)
+    except BillingLimitError as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_403_FORBIDDEN)
+
+    membership = InstitutionMembership.objects.create(
+        institution=institution,
+        user=user,
+        role=role,
+    )
     return Response(
         {
             "message": "Member added successfully",
@@ -550,5 +564,9 @@ def facility_members_list_api(request, facility_id):
         },
         status=status.HTTP_200_OK,
     )
+
+
+
+
 
 

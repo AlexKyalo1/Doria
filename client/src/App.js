@@ -10,6 +10,8 @@ import BasePage from "./components/BasePage";
 import ProfileEditPage from "./pages/ProfileEditPage";
 import SettingsPage from "./pages/SettingsPage";
 import DashboardPage from "./pages/DashboardPage";
+import BillingPage from "./pages/BillingPage";
+import BillingAdminPage from "./pages/BillingAdminPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminBlockedIpsPage from "./pages/AdminBlockedIpsPage";
 import AiIncidentInsightsPage from "./pages/AiIncidentInsightsPage";
@@ -48,6 +50,8 @@ function App() {
           <Route path="incidents" element={<IncidentsPage />} />
           <Route path="ai/insights" element={<AiIncidentInsightsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="billing" element={<BillingPage />} />
+          <Route path="admin/billing" element={<BillingAdminPage />} />
           <Route path="admin/users" element={<AdminUsersPage />} />
           <Route path="admin/security" element={<AdminBlockedIpsPage />} />
         </Route>

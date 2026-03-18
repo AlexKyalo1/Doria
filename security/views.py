@@ -1,29 +1,59 @@
 from django.utils import timezone
-from rest_framework import generics, status
+from rest_framework import generics, serializers, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.access import facility_scope_for_user
+from accounts.models import Institution
+from billing.services.entitlements import BillingLimitError, assert_facility_limit_available
 from .models import BlockedIP
 from .models import SecurityFacility
 from .serializers import BlockedIPSerializer, SecurityFacilitySerializer
 
 
-class SecurityFacilityListCreateView(generics.ListCreateAPIView):
+class FacilityLimitValidationMixin:
+    def _validate_institution_limit(self, institution_id, *, excluding_facility_id=None):
+        if not institution_id:
+            return
+        institution = Institution.objects.filter(id=institution_id).first()
+        if institution is None:
+            raise serializers.ValidationError({"institution_id": "Institution not found."})
+        try:
+            assert_facility_limit_available(
+                institution,
+                excluding_facility_id=excluding_facility_id,
+            )
+        except BillingLimitError as exc:
+            raise serializers.ValidationError({"institution_id": str(exc)})
+
+
+class SecurityFacilityListCreateView(FacilityLimitValidationMixin, generics.ListCreateAPIView):
     serializer_class = SecurityFacilitySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return facility_scope_for_user(self.request.user).order_by("name")
 
+    def perform_create(self, serializer):
+        self._validate_institution_limit(serializer.validated_data.get("institution_id"))
+        serializer.save()
 
-class SecurityFacilityDetailView(generics.RetrieveUpdateDestroyAPIView):
+
+class SecurityFacilityDetailView(FacilityLimitValidationMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SecurityFacilitySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return facility_scope_for_user(self.request.user)
+
+    def perform_update(self, serializer):
+        institution_id = serializer.validated_data.get("institution_id", serializer.instance.institution_id)
+        self._validate_institution_limit(
+            institution_id,
+            excluding_facility_id=serializer.instance.id,
+        )
+        serializer.save()
 
 
 @api_view(["GET"])

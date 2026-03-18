@@ -12,9 +12,11 @@ const routeTitles = {
   "/incidents": "Incidents",
   "/ai/insights": "AI Insights",
   "/settings": "Settings",
+  "/billing": "Billing",
   "/dashboard": "Dashboard",
   "/admin/users": "Admin Users",
   "/admin/security": "Security Control",
+  "/admin/billing": "Billing Admin",
 };
 
 const BasePage = () => {
@@ -67,6 +69,7 @@ const BasePage = () => {
         { to: "/profile", label: "Profile", icon: "\u{1F464}" },
         { to: "/profile/update", label: "Edit Profile", icon: "\u{270E}" },
         { to: "/settings", label: "Settings", icon: "\u{2699}\u{FE0F}" },
+        { to: "/billing", label: "Billing", icon: "\u{1F4B3}" },
       ],
     },
     {
@@ -76,6 +79,7 @@ const BasePage = () => {
       items: [
         { to: "/admin/users", label: "Admin Users", icon: "\u{1F6E0}\u{FE0F}" },
         { to: "/admin/security", label: "Security Control", icon: "\u{1F510}" },
+        { to: "/admin/billing", label: "Billing Admin", icon: "\u{1F4BC}" },
       ],
       gated: true,
     },
@@ -311,7 +315,7 @@ return (
             {impersonationInfo && (
               <div style={impersonationBannerStyle}>
                 <span style={impersonationTextStyle}>
-                  Impersonating {impersonationInfo.impersonatedUser?.username || "user"}
+                 Admin Logged in as: {impersonationInfo.impersonatedUser?.username || "user"}
                 </span>
                 <button onClick={stopImpersonation} style={impersonationButtonStyle}>
                   Return to Admin
@@ -633,6 +637,8 @@ const groupItemsStyle = {
 
 
 export default BasePage;
+
+
 
 
 

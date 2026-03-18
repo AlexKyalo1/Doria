@@ -94,6 +94,7 @@ const DashboardPage = () => {
     { label: "AI Insights", path: "/ai/insights", icon: "\ud83e\udde0" },
     { label: "Edit Profile", path: "/profile/update", icon: "\u270e" },
     { label: "Frontend Settings", path: "/settings", icon: "\u2699\ufe0f" },
+    { label: "Billing", path: "/billing", icon: "\ud83d\udcb3" },
   ];
 
   const openPath = (path) => {
@@ -250,3 +251,5 @@ const styles = {
 };
 
 export default DashboardPage;
+
+

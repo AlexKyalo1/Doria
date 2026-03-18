@@ -11,8 +11,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.access import facility_ids_for_user, institution_ids_for_user, is_site_admin
-from accounts.models import FacilityMembership, InstitutionMembership
+from accounts.models import FacilityMembership, Institution, InstitutionMembership
+from billing.constants import FEATURE_MAX_AI_QUERIES_PER_MONTH
+from billing.services.entitlements import (
+    BillingLimitError,
+    assert_ai_feature_enabled,
+    assert_ai_usage_available,
+    get_ai_usage_summary,
+    increment_feature_usage,
+)
 from incidents.ai import IncidentInsightsError, generate_incident_insights
+from security.models import SecurityFacility
 from utils.hashid import decode_id
 from .models import Incident
 from .serializers import IncidentSerializer
@@ -150,6 +159,7 @@ def _build_ai_analytics(queryset, *, date_from=None, date_to=None):
         "facility_risk": facility_risk,
     }
 
+
 def _incident_scope_for_user(user):
     qs = Incident.objects.all()
     if user is None or not user.is_authenticated:
@@ -194,6 +204,29 @@ def _can_follow_up(user, incident):
     ).exists()
 
 
+def _institutions_for_ai_request(queryset, *, institution_id=None, facility_id=None):
+    institutions = []
+    if institution_id:
+        institution = Institution.objects.filter(id=institution_id).first()
+        if institution:
+            return [institution]
+    if facility_id:
+        facility = SecurityFacility.objects.select_related("institution").filter(id=facility_id).first()
+        if facility and facility.institution_id:
+            return [facility.institution]
+        return []
+
+    institution_ids = set(
+        queryset.exclude(institution_id__isnull=True).values_list("institution_id", flat=True)
+    )
+    institution_ids.update(
+        queryset.exclude(facility__institution_id__isnull=True).values_list("facility__institution_id", flat=True)
+    )
+    if not institution_ids:
+        return []
+    return list(Institution.objects.filter(id__in=institution_ids))
+
+
 class IncidentListCreateView(generics.ListCreateAPIView):
     serializer_class = IncidentSerializer
     permission_classes = [IsAuthenticated]
@@ -217,6 +250,7 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
             from django.http import Http404
             raise Http404
         return queryset.get(id=decoded_id)
+
     def update(self, request, *args, **kwargs):
         incident = self.get_object()
         follow_up_requested = any(
@@ -279,11 +313,13 @@ def incident_ai_insights_api(request):
     queryset = _incident_scope_for_user(request.user).select_related("facility", "institution").distinct()
 
     institution_hash = payload.get("institution_id")
+    institution_id = None
     if institution_hash:
         institution_id = decode_id(institution_hash)
         if not institution_id:
             return Response({"error": "Invalid institution id"}, status=status.HTTP_400_BAD_REQUEST)
         queryset = queryset.filter(institution_id=institution_id)
+
     facility_id = payload.get("facility_id")
     if facility_id:
         try:
@@ -313,6 +349,29 @@ def incident_ai_insights_api(request):
             return Response({"error": "Invalid date_to"}, status=status.HTTP_400_BAD_REQUEST)
         queryset = queryset.filter(occurred_at__date__lte=date_to)
 
+    target_institutions = _institutions_for_ai_request(
+        queryset,
+        institution_id=institution_id,
+        facility_id=facility_id,
+    )
+    usage_summary = []
+    for institution in target_institutions:
+        try:
+            assert_ai_feature_enabled(institution)
+            usage = assert_ai_usage_available(institution)
+            usage_summary.append(
+                {
+                    "institution_id": institution.id,
+                    "institution_name": institution.name,
+                    **usage,
+                }
+            )
+        except BillingLimitError as exc:
+            return Response(
+                {"error": f"{institution.name}: {exc}"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
     try:
         max_records = int(payload.get("max_records") or 50)
     except (TypeError, ValueError):
@@ -336,11 +395,12 @@ def incident_ai_insights_api(request):
             {
                 "insights": INCIDENT_ANALYTICS_FALLBACK,
                 "meta": {
-                "incident_count": 0,
-                "filters": filters,
-                "model": None,
-            },
-            "analytics": analytics,
+                    "incident_count": 0,
+                    "filters": filters,
+                    "model": None,
+                    "usage": usage_summary,
+                },
+                "analytics": analytics,
             },
             status=status.HTTP_200_OK,
         )
@@ -355,6 +415,17 @@ def incident_ai_insights_api(request):
     except IncidentInsightsError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
+    updated_usage_summary = []
+    for institution in target_institutions:
+        increment_feature_usage(institution, FEATURE_MAX_AI_QUERIES_PER_MONTH)
+        updated_usage_summary.append(
+            {
+                "institution_id": institution.id,
+                "institution_name": institution.name,
+                **get_ai_usage_summary(institution),
+            }
+        )
+
     return Response(
         {
             "insights": insights,
@@ -362,21 +433,12 @@ def incident_ai_insights_api(request):
                 "incident_count": len(incidents),
                 "filters": filters,
                 "model": getattr(settings, "OPENAI_INCIDENT_INSIGHTS_MODEL", None),
+                "usage": updated_usage_summary,
             },
             "analytics": analytics,
         },
         status=status.HTTP_200_OK,
     )
-
-
-
-
-
-
-
-
-
-
 
 
 

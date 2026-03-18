@@ -51,6 +51,15 @@ const formatNumber = (value) => {
   return Number(value).toLocaleString();
 };
 
+const isBillingLimitMessage = (message) => {
+  const lower = (message || "").toLowerCase();
+  return (
+    lower.includes("ai insights are not enabled") ||
+    lower.includes("monthly ai insights quota") ||
+    lower.includes("quota")
+  );
+};
+
 const AiIncidentInsightsPage = () => {
   const token = localStorage.getItem("access_token");
   const { theme } = useColorMode();
@@ -65,6 +74,7 @@ const AiIncidentInsightsPage = () => {
   const [loading, setLoading] = useState(false);
   const [bootLoading, setBootLoading] = useState(true);
   const [error, setError] = useState("");
+  const [billingError, setBillingError] = useState("");
 
   const headers = useMemo(
     () => ({
@@ -101,6 +111,7 @@ const AiIncidentInsightsPage = () => {
         }
       } catch {
         setError("Failed to load AI insights workspace.");
+        setBillingError("");
       } finally {
         setBootLoading(false);
       }
@@ -131,7 +142,9 @@ const AiIncidentInsightsPage = () => {
       }
       setResult(data);
     } catch (err) {
-      setError(err.message || "Failed to generate AI insights");
+      const message = err.message || "Failed to generate AI insights";
+      setError(message);
+      setBillingError(isBillingLimitMessage(message) ? message : "");
       setResult(null);
     } finally {
       setLoading(false);
@@ -140,6 +153,11 @@ const AiIncidentInsightsPage = () => {
 
   const riskTone = riskColors[result?.insights?.risk_level] || riskColors.low;
   const analytics = result?.analytics;
+  const usageSummary = result?.meta?.usage || [];
+  const primaryUsage = usageSummary[0] || null;
+  const quotaBlocked = primaryUsage && primaryUsage.limit !== null && primaryUsage.remaining === 0;
+  const billingBlocked = Boolean(billingError) || Boolean(quotaBlocked);
+  const billingPath = profile?.is_staff ? "/admin/billing" : "/billing";
 
   const runDrilldown = async (label, drillFilters) => {
     setDrilldownLoading(true);
@@ -284,14 +302,49 @@ const AiIncidentInsightsPage = () => {
           </div>
 
           <div style={{ ...styles.field, justifyContent: "flex-end" }}>
-            <button type="submit" style={styles.primaryButton} disabled={loading || bootLoading}>
-              {loading ? "Generating..." : "Generate Insights"}
-            </button>
+            {billingBlocked ? (
+              <div style={styles.billingCtaWrap}>
+                <div style={styles.billingInlineMeta}>
+                  <strong>{primaryUsage?.institution_name || "this institution"}</strong>
+                  <span>
+                    {!primaryUsage
+                      ? "AI access unavailable"
+                      : primaryUsage.limit === null
+                        ? "Unlimited quota"
+                        : `${formatNumber(primaryUsage.remaining)} of ${formatNumber(primaryUsage.limit)} remaining`}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  style={styles.billingButton}
+                  onClick={() => {
+                    window.location.href = billingPath;
+                  }}
+                >
+                  Upgrade for AI Insights
+                </button>
+              </div>
+            ) : (
+              <button type="submit" style={styles.primaryButton} disabled={loading || bootLoading}>
+                {loading ? "Generating..." : "Generate Insights"}
+              </button>
+            )}
           </div>
         </form>
       </section>
 
       {error && <div style={styles.errorBanner}>{error}</div>}
+      {billingBlocked && (
+        <div style={styles.noteCard}>
+          AI access is blocked by the current plan or the monthly AI quota. Open billing to upgrade or raise the limit.
+        </div>
+      )}
+      {primaryUsage && (
+        <div style={styles.noteCard}>
+          AI quota this month: {formatNumber(primaryUsage.used)} / {primaryUsage.limit === null ? "Unlimited" : formatNumber(primaryUsage.limit)} used
+          {primaryUsage.remaining !== null ? ` — ${formatNumber(primaryUsage.remaining)} remaining` : ""}
+        </div>
+      )}
       {bootLoading && <div style={styles.noteCard}>Loading AI insights workspace...</div>}
 
       
@@ -673,6 +726,16 @@ const styles = {
     fontWeight: 700,
     cursor: "pointer",
   },
+  billingButton: {
+    border: "none",
+    borderRadius: "12px",
+    padding: "11px 16px",
+    backgroundColor: "#0f766e",
+    color: "#fff",
+    fontWeight: 700,
+    cursor: "pointer",
+    width: "100%",
+  },
   errorBanner: {
     border: "1px solid #fecaca",
     borderRadius: "14px",
@@ -837,6 +900,28 @@ const styles = {
 };
 
 export default AiIncidentInsightsPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
