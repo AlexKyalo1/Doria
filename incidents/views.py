@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.db.models import Count
+from django.db.models import Q
 from django.conf import settings
 from django.http import JsonResponse
 from django.utils import timezone
@@ -24,7 +25,7 @@ from incidents.ai import IncidentInsightsError, generate_incident_insights
 from security.models import SecurityFacility
 from utils.hashid import decode_id
 from .models import Incident
-from .serializers import IncidentSerializer
+from .serializers import IncidentSerializer, IncidentUpdateCreateSerializer
 
 
 INCIDENT_ANALYTICS_FALLBACK = {
@@ -174,12 +175,10 @@ def _incident_scope_for_user(user):
         return qs.none()
 
     return qs.filter(
-        facility_id__in=facility_ids,
-    ) | qs.filter(
-        institution_id__in=institution_ids,
-    ) | qs.filter(
-        facility__isnull=True,
-        institution_id__in=institution_ids,
+        Q(facility_id__in=facility_ids)
+        | Q(institution_id__in=institution_ids)
+        | Q(facility__institution_id__in=institution_ids)
+        | Q(facility__isnull=True, institution_id__in=institution_ids)
     )
 
 
@@ -193,14 +192,16 @@ def _can_follow_up(user, incident):
         user_id=user.id,
     ).exists():
         return True
-    if incident.institution_id is None:
+    institution = incident.institution
+    if institution is None and incident.facility_id and incident.facility and incident.facility.institution_id:
+        institution = incident.facility.institution
+    if institution is None:
         return False
-    if incident.institution.owner_id == user.id:
+    if institution.owner_id == user.id:
         return True
     return InstitutionMembership.objects.filter(
-        institution_id=incident.institution_id,
+        institution=institution,
         user_id=user.id,
-        role="admin",
     ).exists()
 
 
@@ -258,7 +259,7 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
         if follow_up_requested and not _can_follow_up(request.user, incident):
             return Response(
-                {"error": "Only facility members/admins can update follow-ups"},
+                {"error": "Only authorized facility or institution members can update follow-ups"},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -272,6 +273,43 @@ class IncidentDetailView(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
 
         return Response(serializer.data)
+
+
+class IncidentUpdateCreateView(generics.CreateAPIView):
+    serializer_class = IncidentUpdateCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return _incident_scope_for_user(self.request.user).distinct()
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        lookup = self.kwargs.get("pk")
+        decoded_id = decode_id(lookup)
+        if not decoded_id:
+            from django.http import Http404
+            raise Http404
+        return queryset.get(id=decoded_id)
+
+    def create(self, request, *args, **kwargs):
+        incident = self.get_object()
+        if not _can_follow_up(request.user, incident):
+            return Response(
+                {"error": "Only authorized facility or institution members can update incidents"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        update = serializer.save(incident=incident, created_by=request.user)
+
+        incident.follow_up_status = update.status
+        incident.follow_up_note = update.note
+        incident.follow_up_by = request.user
+        incident.follow_up_at = timezone.now()
+        incident.save(update_fields=["follow_up_status", "follow_up_note", "follow_up_by", "follow_up_at"])
+
+        return Response(IncidentSerializer(incident, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])

@@ -329,9 +329,9 @@ def institution_detail_api(request, institution_id):
         serializer = InstitutionSerializer(institution)
         return Response({"institution": serializer.data})
 
-    if institution.owner_id != request.user.id:
+    if not _can_manage_members(request.user, institution):
         return Response(
-            {"error": "Only owner can update"},
+            {"error": "Only owner or institution admin can update"},
             status=status.HTTP_403_FORBIDDEN,
         )
 

@@ -18,6 +18,7 @@ const InstitutionsPage = () => {
   );
 
   const [createForm, setCreateForm] = useState({ name: "", description: "" });
+  const [editForm, setEditForm] = useState({ name: "", description: "" });
   const [memberForm, setMemberForm] = useState({ user_id: "", role: "member" });
 
   const [status, setStatus] = useState("idle");
@@ -77,6 +78,10 @@ const InstitutionsPage = () => {
           throw new Error(detailData.error || "Failed to load institution");
         }
         setSelectedInstitution(detailData.institution);
+        setEditForm({
+          name: detailData.institution?.name || "",
+          description: detailData.institution?.description || "",
+        });
 
         const membersData = await membersRes.json();
         if (!membersRes.ok) {
@@ -181,6 +186,34 @@ const InstitutionsPage = () => {
       showAlert(data.message || "Member added successfully", "success");
     } catch (error) {
       showAlert(error.message || "Failed to add member", "error");
+    }
+  };
+
+  const handleUpdateInstitution = async (event) => {
+    event.preventDefault();
+    if (!selectedInstitutionId) {
+      showAlert("Select an institution first", "warning");
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`${API_BASE}/institutions/${selectedInstitutionId}/`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update institution");
+      }
+
+      const updated = data.institution;
+      setSelectedInstitution(updated);
+      setInstitutions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      showAlert("Institution updated successfully", "success");
+    } catch (error) {
+      showAlert(error.message || "Failed to update institution", "error");
     }
   };
 
@@ -349,6 +382,47 @@ const InstitutionsPage = () => {
           </div>
         </section>
       </div>
+
+      <section style={{ ...styles.card, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <div style={styles.cardHeader}>
+          <h2 style={styles.cardTitle}>Edit Institution</h2>
+          {selectedInstitution && (
+            <span style={styles.selectedBadge}>{selectedInstitution.name}</span>
+          )}
+        </div>
+
+        {!selectedInstitution ? (
+          <div style={styles.emptyState}>
+            <p style={styles.emptyStateText}>No institution selected</p>
+            <p style={styles.emptyStateSubtext}>Select an institution to update its details.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleUpdateInstitution} style={styles.form}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Institution Name</label>
+              <input
+                style={styles.input}
+                value={editForm.name}
+                onChange={(event) => setEditForm((prev) => ({ ...prev, name: event.target.value }))}
+                required
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Description</label>
+              <textarea
+                style={styles.textarea}
+                value={editForm.description}
+                onChange={(event) => setEditForm((prev) => ({ ...prev, description: event.target.value }))}
+                rows="4"
+              />
+            </div>
+            <button type="submit" style={styles.primaryButton}>
+              <span style={styles.buttonIcon}>{"\u270e"}</span>
+              Save Institution
+            </button>
+          </form>
+        )}
+      </section>
 
       <section style={{ ...styles.card, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <div style={styles.cardHeader}>

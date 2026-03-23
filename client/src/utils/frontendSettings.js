@@ -1,4 +1,21 @@
-﻿export const FRONTEND_SETTINGS_KEY = "frontend_settings";
+export const FRONTEND_SETTINGS_KEY = "frontend_settings";
+
+export const defaultFacilityIcons = {
+  police_station: "👮",
+  police_post: "🚔",
+  dci: "🕵️",
+  administration: "🏛️",
+};
+
+export const defaultIncidentIcons = {
+  robbery: "🚨",
+  assault: "🆘",
+  accident: "🚑",
+  missing_person: "🔎",
+  murder: "⚠️",
+  theft: "🔐",
+  other: "📍",
+};
 
 export const defaultFrontendSettings = {
   compactSidebar: false,
@@ -6,6 +23,8 @@ export const defaultFrontendSettings = {
   denseContent: false,
   showInstitutionIds: true,
   colorMode: "light",
+  facilityIcons: defaultFacilityIcons,
+  incidentIcons: defaultIncidentIcons,
 };
 
 export function getFrontendSettings() {
@@ -22,6 +41,14 @@ export function getFrontendSettings() {
     };
 
     merged.colorMode = merged.colorMode === "dark" ? "dark" : "light";
+    merged.facilityIcons = {
+      ...defaultFacilityIcons,
+      ...(parsed?.facilityIcons || {}),
+    };
+    merged.incidentIcons = {
+      ...defaultIncidentIcons,
+      ...(parsed?.incidentIcons || {}),
+    };
     return merged;
   } catch {
     return { ...defaultFrontendSettings };
@@ -40,9 +67,27 @@ export function saveFrontendSettings(nextSettings) {
     ...defaultFrontendSettings,
     ...nextSettings,
     colorMode: nextSettings?.colorMode === "dark" ? "dark" : "light",
+    facilityIcons: {
+      ...defaultFacilityIcons,
+      ...(nextSettings?.facilityIcons || {}),
+    },
+    incidentIcons: {
+      ...defaultIncidentIcons,
+      ...(nextSettings?.incidentIcons || {}),
+    },
   };
 
   localStorage.setItem(FRONTEND_SETTINGS_KEY, JSON.stringify(payload));
   applyColorMode(payload.colorMode);
   window.dispatchEvent(new Event("frontend-settings-changed"));
+}
+
+export function getFacilityTypeIcon(type) {
+  const settings = getFrontendSettings();
+  return settings.facilityIcons?.[type] || defaultFacilityIcons[type] || "📍";
+}
+
+export function getIncidentTypeIcon(type) {
+  const settings = getFrontendSettings();
+  return settings.incidentIcons?.[type] || defaultIncidentIcons[type] || "📍";
 }

@@ -367,7 +367,7 @@ const FacilitiesPage = () => {
     }
 
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
     script.async = true;
     script.defer = true;
     script.dataset.googleMaps = "true";
@@ -773,6 +773,7 @@ const FacilitiesPage = () => {
                 <option value="police_post">Police Post</option>
                 <option value="dci">DCI Office</option>
                 <option value="administration">Administration Police</option>
+                <option value="administration">Office(Institution Branch)</option>
               </select>
 
               <div style={styles.row}>

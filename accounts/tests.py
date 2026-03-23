@@ -71,6 +71,19 @@ class InstitutionApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_institution_admin_can_update_institution(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f"/api/accounts/institutions/{self.institution_hash}/",
+            {"name": "Updated by Admin", "description": "Admin edit"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.institution.refresh_from_db()
+        self.assertEqual(self.institution.name, "Updated by Admin")
+        self.assertEqual(self.institution.description, "Admin edit")
+
     def test_admin_can_add_member_but_outsider_cannot(self):
         self.client.force_authenticate(user=self.admin)
         add_response = self.client.post(

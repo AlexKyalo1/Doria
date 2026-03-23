@@ -42,3 +42,29 @@ class Incident(models.Model):
 
     def __str__(self):
         return f"{self.incident_type} - {self.ob_number}"
+
+
+class IncidentUpdate(models.Model):
+    STATUS_CHOICES = [("open", "Open"), ("in_progress", "In Progress"), ("resolved", "Resolved")]
+
+    incident = models.ForeignKey(Incident, on_delete=models.CASCADE, related_name="updates")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    note = models.TextField(blank=True, default="")
+    action_taken = models.TextField(blank=True, default="")
+    assigned_to_name = models.CharField(max_length=255, blank=True, default="")
+    next_step = models.TextField(blank=True, default="")
+    due_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="incident_updates",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"Update for {self.incident.ob_number} at {self.created_at:%Y-%m-%d %H:%M}"

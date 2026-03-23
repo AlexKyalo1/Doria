@@ -1,6 +1,7 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
 import { apiFetch } from "../utils/apiFetch";
+import { getFrontendSettings } from "../utils/frontendSettings";
 
 const ACCOUNTS_API = "http://127.0.0.1:8000/api/accounts";
 const SECURITY_API = "http://127.0.0.1:8000/api/security";
@@ -33,16 +34,6 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/\nnn"/g, "&quot;")
     .replace(/'/g, "&#39;");
-
-const getFacilityTypeIcon = (type) => {
-  const icons = {
-    police_station: "👮",
-    police_post: "🚔",
-    dci: "🕵️",
-    administration: "🏛️",
-  };
-  return icons[type] || "📍";
-};
 
 const getFacilityTypeColor = (type) => {
   const colors = {
@@ -96,6 +87,8 @@ const FacilitiesDistanceMap = ({
   distanceFrom,
   distanceTo,
   facilityById,
+  facilityIcons,
+  incidentIcons,
 }) => {
   const hostRef = useRef(null);
   const mapRef = useRef(null);
@@ -113,50 +106,47 @@ const FacilitiesDistanceMap = ({
     const isTo = facilityId === toId;
     const typeKey = facility?.facility_type || "default";
     const colors = getFacilityTypeColor(typeKey);
-
-    let scale = 12;
-    let strokeWeight = 2;
-    
-    if (isFrom || isTo) {
-      scale = 20;
-      strokeWeight = 3;
-    }
-
-    const pulsingEffect = (isFrom || isTo) ? 
-      '<circle cx="12" cy="12" r="16" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3">' +
-      '<animate attributeName="r" values="16;20;16" dur="1.5s" repeatCount="indefinite" />' +
-      '<animate attributeName="opacity" values="0.3;0.1;0.3" dur="1.5s" repeatCount="indefinite" />' +
-      '</circle>' : '';
+    const facilityGlyph = facilityIcons?.[typeKey] || "📍";
+    const fontSize = isFrom || isTo ? 34 : 30;
+    const ringColor = isFrom ? "#2563eb" : isTo ? "#7c3aed" : colors.secondary;
 
     const svgString = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+      <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
         <defs>
-          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="${ringColor}" flood-opacity="0.35"/>
           </filter>
         </defs>
-        ${pulsingEffect}
         <g filter="url(#shadow)">
-          <circle cx="24" cy="24" r="${scale}" fill="${colors.primary}" 
-            stroke="${isFrom ? '#2563eb' : isTo ? '#7c3aed' : colors.secondary}" 
-            stroke-width="${strokeWeight}" />
-          <text x="24" y="24" text-anchor="middle" dy=".3em" fill="white" 
-            font-size="${scale * 0.6}" font-weight="bold" font-family="Arial, sans-serif">
-            ${getFacilityTypeIcon(facility.facility_type)}
+          <text
+            x="28"
+            y="30"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            font-size="${fontSize}"
+            font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif"
+          >
+            ${facilityGlyph}
           </text>
+          ${
+            isFrom || isTo
+              ? `<circle cx="28" cy="28" r="22" fill="none" stroke="${ringColor}" stroke-width="2.5" stroke-dasharray="4 4" opacity="0.65" />`
+              : ""
+          }
         </g>
       </svg>
     `;
 
     return {
       url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgString),
-      scaledSize: new window.google.maps.Size(48, 48),
-      anchor: new window.google.maps.Point(24, 24),
+      scaledSize: new window.google.maps.Size(56, 56),
+      anchor: new window.google.maps.Point(28, 28),
     };
-  }, [fromId, toId]);
+  }, [facilityIcons, fromId, toId]);
 
   const incidentMarkerIcon = useCallback((incident) => {
     const severity = incident?.severity || 'medium';
+    const incidentGlyph = incidentIcons?.[incident?.incident_type] || "📍";
     const colors = {
       high: '#dc2626',
       medium: '#f59e0b',
@@ -165,28 +155,34 @@ const FacilitiesDistanceMap = ({
     const color = colors[severity] || colors.medium;
 
     const svgString = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+      <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52">
         <defs>
-          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="${color}" flood-opacity="0.45"/>
           </filter>
         </defs>
         <g filter="url(#shadow)">
-          <path d="M20 2 L36 38 L20 30 L4 38 Z" fill="${color}" stroke="#991b1b" stroke-width="2"/>
-          <circle cx="20" cy="22" r="2" fill="white">
-            <animate attributeName="r" values="2;3;2" dur="1s" repeatCount="indefinite" />
-          </circle>
-          <text x="20" y="28" text-anchor="middle" fill="white" font-size="12" font-weight="bold">📍</text>
+          <text
+            x="26"
+            y="28"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            font-size="32"
+            font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif"
+          >
+            ${incidentGlyph}
+          </text>
+          <circle cx="26" cy="26" r="21" fill="none" stroke="${color}" stroke-width="2.5" opacity="0.7" />
         </g>
       </svg>
     `;
 
     return {
       url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgString),
-      scaledSize: new window.google.maps.Size(40, 40),
-      anchor: new window.google.maps.Point(20, 30),
+      scaledSize: new window.google.maps.Size(52, 52),
+      anchor: new window.google.maps.Point(26, 26),
     };
-  }, []);
+  }, [incidentIcons]);
 
     const showFacilityInfo = useCallback((facility, marker) => {
     if (!clickInfoRef.current) {
@@ -406,7 +402,7 @@ const FacilitiesDistanceMap = ({
         const incidentLabel = escapeHtml(incident.incident_type || "Incident");
         const obLabel = escapeHtml(incident.ob_number || "-");
         const buttonId = incident.id ? `incident-open-${incident.id}` : null;
-        const openIncidentUrl = incident.id ? `/incidents?incident=${encodeURIComponent(incident.id)}` : null;
+        const openIncidentUrl = incident.id ? `/incidents/manage?incident=${encodeURIComponent(incident.id)}` : null;
 
         const details = `
           <div style="font-family: system-ui, -apple-system, sans-serif; padding: 6px 0;">
@@ -549,6 +545,7 @@ const FacilitiesDistanceMap = ({
 const FacilitiesMapPage = () => {
   const token = localStorage.getItem("access_token");
   const { theme, isDark } = useColorMode();
+  const [frontendSettings, setFrontendSettings] = useState(getFrontendSettings());
 
   const [profile, setProfile] = useState(null);
   const [institutions, setInstitutions] = useState([]);
@@ -568,6 +565,12 @@ const FacilitiesMapPage = () => {
     }),
     [token]
   );
+
+  useEffect(() => {
+    const onSettingsChange = () => setFrontendSettings(getFrontendSettings());
+    window.addEventListener("frontend-settings-changed", onSettingsChange);
+    return () => window.removeEventListener("frontend-settings-changed", onSettingsChange);
+  }, []);
 
   const showBanner = (type, text) => {
     setBanner({ type, text });
@@ -610,9 +613,6 @@ const FacilitiesMapPage = () => {
     }
     const list = data.institutions || [];
     setInstitutions(list);
-    if (list.length > 0 && !selectedInstitutionId) {
-      setSelectedInstitutionId(String(list[0].id));
-    }
   };
 
   const loadFacilities = async () => {
@@ -648,17 +648,23 @@ const FacilitiesMapPage = () => {
       return;
     }
 
+    const existingScript = document.querySelector("script[data-google-maps='true']");
+    if (existingScript) {
+      const onLoad = () => setGoogleMapsReady(true);
+      existingScript.addEventListener("load", onLoad);
+      return () => existingScript.removeEventListener("load", onLoad);
+    }
+
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
     script.async = true;
     script.defer = true;
+    script.dataset.googleMaps = "true";
     script.onload = () => setGoogleMapsReady(true);
     script.onerror = () => showBanner("error", "Failed to load Google Maps script.");
     document.body.appendChild(script);
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -724,10 +730,15 @@ const FacilitiesMapPage = () => {
     if (!selectedInstitutionId) {
       return list;
     }
-    return list.filter(
-      (incident) => incident.institution_id == null || String(incident.institution_id) === String(selectedInstitutionId)
-    );
-  }, [incidents, selectedInstitutionId]);
+    return list.filter((incident) => {
+      const facilityIdValue = incident.facility_id ?? incident.facility;
+      const facility = facilityIdValue != null
+        ? facilities.find((item) => String(item.id) === String(facilityIdValue))
+        : null;
+      const incidentInstitutionId = incident.institution_id ?? facility?.institution_id ?? null;
+      return incidentInstitutionId == null || String(incidentInstitutionId) === String(selectedInstitutionId);
+    });
+  }, [facilities, incidents, selectedInstitutionId]);
 
 
   const mappableIncidents = useMemo(
@@ -936,6 +947,10 @@ const FacilitiesMapPage = () => {
         )}
 
         <FacilitiesDistanceMap
+          key={JSON.stringify({
+            facilityIcons: frontendSettings.facilityIcons,
+            incidentIcons: frontendSettings.incidentIcons,
+          })}
           ready={googleMapsReady}
           center={mapCenter}
           facilities={mappableFacilities}
@@ -948,6 +963,8 @@ const FacilitiesMapPage = () => {
           distanceFrom={fromFacility}
           distanceTo={toFacility}
           facilityById={facilityById}
+          facilityIcons={frontendSettings.facilityIcons}
+          incidentIcons={frontendSettings.incidentIcons}
         />
       </section>
 

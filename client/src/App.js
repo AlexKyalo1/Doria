@@ -18,6 +18,7 @@ import AiIncidentInsightsPage from "./pages/AiIncidentInsightsPage";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import FacilitiesMapPage from "./pages/FacilitiesMapPage";
 import IncidentsPage from "./pages/IncidentsPage";
+import ManageIncidentsPage from "./pages/ManageIncidentsPage";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("access_token");
@@ -48,6 +49,7 @@ function App() {
           <Route path="facilities" element={<FacilitiesPage />} />
           <Route path="facilities/map" element={<FacilitiesMapPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="incidents/manage" element={<ManageIncidentsPage />} />
           <Route path="ai/insights" element={<AiIncidentInsightsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="billing" element={<BillingPage />} />

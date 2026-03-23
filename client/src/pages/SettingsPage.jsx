@@ -1,53 +1,119 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   applyColorMode,
+  defaultFacilityIcons,
   defaultFrontendSettings,
+  defaultIncidentIcons,
   getFrontendSettings,
   saveFrontendSettings,
 } from "../utils/frontendSettings";
 import { useColorMode } from "../utils/useColorMode";
+import { apiFetch } from "../utils/apiFetch";
+
+const API_BASE = "http://127.0.0.1:8000/api/accounts";
 
 const settingRows = [
   {
     key: "compactSidebar",
     title: "Compact sidebar",
     description: "Use smaller sidebar width",
-    icon: "\ud83d\udccf",
+    icon: "📏",
   },
   {
     key: "reducedMotion",
     title: "Reduced motion",
     description: "Turn off UI animations",
-    icon: "\ud83c\udfac",
+    icon: "🎬",
   },
   {
     key: "denseContent",
     title: "Dense content",
     description: "Use tighter spacing",
-    icon: "\ud83d\udce6",
+    icon: "📦",
   },
   {
     key: "showInstitutionIds",
     title: "Show institution IDs",
     description: "Display HashIDs in lists",
-    icon: "\ud83c\udd94",
+    icon: "🆔",
   },
 ];
 
+const facilityIconSuggestions = {
+  police_station: ["👮", "🏢", "🛡️", "📍", "🚓"],
+  police_post: ["🚔", "📍", "🛡️", "🚨", "🏚️"],
+  dci: ["🕵️", "🧠", "📂", "🔍", "🏢"],
+  administration: ["🏛️", "🧭", "📍", "🛡️", "🏘️"],
+};
+
+const incidentIconSuggestions = {
+  robbery: ["🚨", "💥", "🔐", "🚔", "⚠️"],
+  assault: ["🆘", "⚠️", "🚑", "🚨", "👥"],
+  accident: ["🚑", "🚧", "⚠️", "🚨", "🛟"],
+  missing_person: ["🔎", "👤", "🧭", "📣", "🚨"],
+  murder: ["⚠️", "🚨", "🔴", "🧾", "🚔"],
+  theft: ["🔐", "📦", "🚨", "👀", "🧾"],
+  other: ["📍", "📝", "🚨", "⚙️", "📌"],
+};
+
+const typeLabels = {
+  police_station: "Police Station",
+  police_post: "Police Post",
+  dci: "DCI Office",
+  administration: "Administration",
+  robbery: "Robbery",
+  assault: "Assault",
+  accident: "Accident",
+  missing_person: "Missing Person",
+  murder: "Murder",
+  theft: "Theft",
+  other: "Other",
+};
+
 const SettingsPage = () => {
+  const token = localStorage.getItem("access_token");
   const [settings, setSettings] = useState(getFrontendSettings());
+  const [profile, setProfile] = useState(null);
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const { isDark, theme } = useColorMode();
+
+  const headers = useMemo(
+    () => ({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    }),
+    [token]
+  );
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!token) {
+        return;
+      }
+      try {
+        const res = await apiFetch(`${API_BASE}/profile/`, { headers });
+        const data = await res.json();
+        if (res.ok) {
+          setProfile(data.user || null);
+        }
+      } catch {
+        // Keep settings usable even if profile fetch fails.
+      }
+    };
+    loadProfile();
+  }, [headers, token]);
 
   useEffect(() => {
     if (alert.show) {
       const timer = setTimeout(() => {
         setAlert({ show: false, type: "", message: "" });
-      }, 2000);
+      }, 2200);
       return () => clearTimeout(timer);
     }
   }, [alert.show]);
+
+  const isSuperAdmin = Boolean(profile?.is_superuser);
 
   const showAlert = (message, type = "success") => {
     setAlert({ show: true, type, message });
@@ -60,7 +126,7 @@ const SettingsPage = () => {
     };
     setSettings(newSettings);
     saveFrontendSettings(newSettings);
-    showAlert(`${settingRows.find((r) => r.key === key).title} updated`, "success");
+    showAlert(`${settingRows.find((r) => r.key === key)?.title || "Setting"} updated`, "success");
   };
 
   const handleModeChange = (mode) => {
@@ -85,6 +151,29 @@ const SettingsPage = () => {
     setAlert({ show: false, type: "", message: "" });
   };
 
+  const handleIconSelect = (groupKey, typeKey, icon) => {
+    const nextSettings = {
+      ...settings,
+      [groupKey]: {
+        ...(settings[groupKey] || {}),
+        [typeKey]: icon,
+      },
+    };
+    setSettings(nextSettings);
+    saveFrontendSettings(nextSettings);
+    showAlert(`Updated ${typeLabels[typeKey] || typeKey} icon`, "success");
+  };
+
+  const handleRestoreGroupDefaults = (groupKey) => {
+    const nextSettings = {
+      ...settings,
+      [groupKey]: groupKey === "facilityIcons" ? defaultFacilityIcons : defaultIncidentIcons,
+    };
+    setSettings(nextSettings);
+    saveFrontendSettings(nextSettings);
+    showAlert("AI icon choices reset to defaults", "info");
+  };
+
   const getAlertStyles = () => {
     const baseStyles = { ...styles.alert };
     switch (alert.type) {
@@ -97,15 +186,63 @@ const SettingsPage = () => {
     }
   };
 
+  const renderIconGroup = (title, description, groupKey, suggestions) => {
+    const currentIcons = settings[groupKey] || {};
+
+    return (
+      <div style={{ ...styles.iconCard, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <div style={styles.iconHeader}>
+          <div>
+            <h2 style={{ ...styles.cardTitle, color: theme.text }}>{title}</h2>
+            <p style={{ ...styles.iconDescription, color: theme.mutedText }}>{description}</p>
+          </div>
+          <button type="button" style={styles.resetButtonSmall} onClick={() => handleRestoreGroupDefaults(groupKey)}>
+            Restore defaults
+          </button>
+        </div>
+
+        <div style={styles.iconGrid}>
+          {Object.entries(suggestions).map(([typeKey, choices]) => (
+            <div key={typeKey} style={styles.iconRow}>
+              <div style={styles.iconRowHeader}>
+                <span style={styles.iconTypeLabel}>{typeLabels[typeKey] || typeKey}</span>
+                <span style={styles.iconCurrent}>{currentIcons[typeKey] || "📍"}</span>
+              </div>
+              <div style={styles.iconSuggestionCopy}>AI suggestions for this type</div>
+              <div style={styles.iconChoices}>
+                {choices.map((icon) => {
+                  const active = currentIcons[typeKey] === icon;
+                  return (
+                    <button
+                      key={`${typeKey}-${icon}`}
+                      type="button"
+                      style={{
+                        ...styles.iconChoice,
+                        ...(active ? styles.iconChoiceActive : {}),
+                      }}
+                      onClick={() => handleIconSelect(groupKey, typeKey, icon)}
+                    >
+                      {icon}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ ...styles.page, backgroundColor: theme.pageBg }}>
       {alert.show && (
         <div style={getAlertStyles()} role="alert">
           <div style={styles.alertContent}>
-            <span style={styles.alertIcon}>{alert.type === "success" ? "\u2713" : "\u2139"}</span>
+            <span style={styles.alertIcon}>{alert.type === "success" ? "✓" : "ℹ"}</span>
             <span style={styles.alertMessage}>{alert.message}</span>
             <button style={styles.alertClose} onClick={handleDismissAlert} aria-label="Close alert">
-              {"\u00d7"}
+              {"×"}
             </button>
           </div>
           <div style={styles.alertProgress}></div>
@@ -114,13 +251,18 @@ const SettingsPage = () => {
 
       <div style={styles.header}>
         <div style={styles.headerContent}>
-          <h1 style={{ ...styles.title, color: theme.text }}>Settings</h1>
+          <div>
+            <h1 style={{ ...styles.title, color: theme.text }}>Settings</h1>
+            <p style={{ ...styles.subtitle, color: theme.mutedText }}>
+              Tune the interface and, for super admins, choose AI-suggested icons for facilities and incidents.
+            </p>
+          </div>
         </div>
       </div>
 
       <div style={{ ...styles.modeCard, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <div style={styles.modeRow}>
-          <span style={styles.modeIcon}>{isDark ? "\ud83c\udf19" : "\u2600\ufe0f"}</span>
+          <span style={styles.modeIcon}>{isDark ? "🌙" : "☀️"}</span>
           <span style={{ ...styles.modeLabel, color: theme.text }}>Color Mode</span>
           <div style={styles.modeButtons}>
             <button
@@ -182,9 +324,33 @@ const SettingsPage = () => {
         ))}
       </div>
 
+      {isSuperAdmin ? (
+        <>
+          {renderIconGroup(
+            "Facility Icons",
+            "AI-suggested symbols that super admins can assign to facility types.",
+            "facilityIcons",
+            facilityIconSuggestions
+          )}
+          {renderIconGroup(
+            "Incident Icons",
+            "AI-suggested symbols that super admins can assign to incident categories.",
+            "incidentIcons",
+            incidentIconSuggestions
+          )}
+        </>
+      ) : (
+        <div style={{ ...styles.noticeCard, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div style={styles.noticeTitle}>Super Admin Only</div>
+          <div style={{ ...styles.noticeText, color: theme.mutedText }}>
+            AI icon selection appears here for super admins so they can standardize how facilities and incidents appear on maps.
+          </div>
+        </div>
+      )}
+
       <div style={styles.footer}>
         <button type="button" style={styles.resetButton} onClick={handleReset}>
-          <span style={styles.buttonIcon}>{"\u21ba"}</span>
+          <span style={styles.buttonIcon}>↺</span>
           Restore Defaults
         </button>
       </div>
@@ -198,7 +364,7 @@ const styles = {
     flexDirection: "column",
     gap: "12px",
     padding: "16px",
-    maxWidth: "800px",
+    maxWidth: "980px",
     margin: "0 auto",
     position: "relative",
     minHeight: "100vh",
@@ -260,7 +426,7 @@ const styles = {
     height: "2px",
     backgroundColor: "currentColor",
     opacity: 0.3,
-    animation: "progress 2s linear forwards",
+    animation: "progress 2.2s linear forwards",
   },
   header: {
     marginBottom: "4px",
@@ -274,6 +440,10 @@ const styles = {
     margin: 0,
     fontSize: "24px",
     fontWeight: "600",
+  },
+  subtitle: {
+    margin: "6px 0 0",
+    fontSize: "13px",
   },
   modeCard: {
     border: "1px solid #e2e8f0",
@@ -396,6 +566,91 @@ const styles = {
     boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
     left: "2px",
   },
+  iconCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    padding: "14px",
+  },
+  iconHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "12px",
+    marginBottom: "14px",
+    flexWrap: "wrap",
+  },
+  cardTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "600",
+  },
+  iconDescription: {
+    margin: "6px 0 0",
+    fontSize: "12px",
+  },
+  iconGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "12px",
+  },
+  iconRow: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    padding: "12px",
+    backgroundColor: "#f8fafc",
+  },
+  iconRowHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "8px",
+  },
+  iconTypeLabel: {
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#0f172a",
+  },
+  iconCurrent: {
+    fontSize: "22px",
+  },
+  iconSuggestionCopy: {
+    fontSize: "11px",
+    color: "#64748b",
+    marginBottom: "8px",
+  },
+  iconChoices: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+  },
+  iconChoice: {
+    width: "42px",
+    height: "42px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+    backgroundColor: "#ffffff",
+    fontSize: "22px",
+    cursor: "pointer",
+  },
+  iconChoiceActive: {
+    borderColor: "#0f5132",
+    boxShadow: "0 0 0 2px rgba(15, 81, 50, 0.15)",
+  },
+  noticeCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    padding: "14px",
+  },
+  noticeTitle: {
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#0f172a",
+    marginBottom: "4px",
+  },
+  noticeText: {
+    fontSize: "12px",
+    lineHeight: 1.5,
+  },
   footer: {
     display: "flex",
     justifyContent: "center",
@@ -415,6 +670,16 @@ const styles = {
     alignItems: "center",
     gap: "6px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+  },
+  resetButtonSmall: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    color: "#475569",
+    padding: "8px 10px",
+    fontSize: "12px",
+    fontWeight: "600",
+    cursor: "pointer",
   },
   buttonIcon: {
     fontSize: "14px",

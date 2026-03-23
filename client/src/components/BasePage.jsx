@@ -10,6 +10,7 @@ const routeTitles = {
   "/facilities": "Facilities",
   "/facilities/map": "Facility Map",
   "/incidents": "Incidents",
+  "/incidents/manage": "Incident Manager",
   "/ai/insights": "AI Insights",
   "/settings": "Settings",
   "/billing": "Billing",
@@ -56,6 +57,7 @@ const BasePage = () => {
       icon: "\u{1F6E1}\u{FE0F}",
       items: [
         { to: "/incidents", label: "Incidents", icon: "\u{1F6A8}" },
+        { to: "/incidents/manage", label: "Incident Manager", icon: "\u{1F5C2}\u{FE0F}" },
         { to: "/facilities", label: "Facilities", icon: "\u{1F4CD}" },
         { to: "/facilities/map", label: "Facility Map", icon: "\u{1F5FA}\u{FE0F}" },
         { to: "/institutions", label: "Institutions", icon: "\u{1F3DB}\u{FE0F}" },
@@ -364,6 +366,8 @@ const sidebarStyle = {
   boxShadow: "4px 0 20px rgba(15, 81, 50, 0.15)",
   position: "relative",
   zIndex: 10,
+  overflow: "hidden",
+  minHeight: 0,
 };
 
 const logoContainerStyle = {
@@ -410,6 +414,9 @@ const navStyle = {
   gap: "4px",
   padding: "0 16px",
   flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  overflowX: "hidden",
 };
 
 const getLinkStyle = (isActive, sidebarOpen) => ({
@@ -445,7 +452,8 @@ const linkTextStyle = {
 const sidebarFooterStyle = {
   padding: "20px 16px",
   borderTop: "1px solid rgba(255,255,255,0.1)",
-  marginTop: "auto",
+  flexShrink: 0,
+  background: "inherit",
 };
 
 const userInfoStyle = {
@@ -494,6 +502,7 @@ const mainContainerStyle = {
   flex: 1,
   display: "flex",
   flexDirection: "column",
+  minWidth: 0,
 };
 
 const headerStyle = {
@@ -633,13 +642,11 @@ const groupItemsStyle = {
   display: "grid",
   gap: "4px",
   marginTop: "6px",
+  overflow: "hidden",
 };
 
 
 export default BasePage;
-
-
-
 
 
 
