@@ -387,6 +387,8 @@ const ManageIncidentsPage = () => {
         incident.ob_number,
         incident.description,
         incident.incident_type,
+        incident.proxy_phone_number,
+        incident.contact_phone,
         incident.facility_name,
         incident.facility,
         incident.follow_up_note,
@@ -826,6 +828,7 @@ const ManageIncidentsPage = () => {
                   <tr>
                     <th style={styles.th}>OB</th>
                     <th style={styles.th}>Type</th>
+                    <th style={styles.th}>Proxy Phone</th>
                     <th style={styles.th}>Facility</th>
                     <th style={styles.th}>Occurred</th>
                     <th style={styles.th}>Status</th>
@@ -845,6 +848,7 @@ const ManageIncidentsPage = () => {
                       >
                         <td style={styles.tdStrong}>{incident.ob_number}</td>
                         <td style={styles.td}>{incident.incident_type}</td>
+                        <td style={styles.td}>{incident.proxy_phone_number || "-"}</td>
                         <td style={styles.td}>{incident.facility_name || incident.facility || "-"}</td>
                         <td style={styles.td}>{incident.occurred_at || "-"}</td>
                         <td style={styles.td}>
@@ -895,6 +899,10 @@ const ManageIncidentsPage = () => {
                 <div style={styles.detailItem}>
                   <span style={styles.detailLabel}>Occurred</span>
                   <span style={styles.detailValue}>{selectedIncident.occurred_at || "-"}</span>
+                </div>
+                <div style={styles.detailItem}>
+                  <span style={styles.detailLabel}>Proxy Phone</span>
+                  <span style={styles.detailValue}>{selectedIncident.proxy_phone_number || "-"}</span>
                 </div>
                 <div style={styles.detailItem}>
                   <span style={styles.detailLabel}>Last Updated By</span>

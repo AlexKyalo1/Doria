@@ -488,7 +488,6 @@ const FacilitiesPage = () => {
     );
   }, [facilities, selectedInstitutionId, isAdmin, allowedInstitutionIds]);
 
-
   const previewCenter = useMemo(() => {
     const lat = parseCoord(facilityForm.latitude);
     const lng = parseCoord(facilityForm.longitude);

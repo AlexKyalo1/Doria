@@ -7,6 +7,7 @@ import ProfilePage from "./pages/ProfilePage";
 import InstitutionsPage from "./pages/InstitutionsPage";
 import LandingPage from "./pages/LandingPage";
 import PublicIncidentReportPage from "./pages/PublicIncidentReportPage";
+import IncidentStatusLookupPage from "./pages/IncidentStatusLookupPage";
 import BasePage from "./components/BasePage";
 import ProfileEditPage from "./pages/ProfileEditPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -39,6 +40,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/report-incident" element={<PublicIncidentReportPage />} />
+        <Route path="/incident-status" element={<IncidentStatusLookupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegistrationPage />} />
 

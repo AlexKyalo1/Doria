@@ -28,6 +28,7 @@ const defaultIncidentForm = {
   facility_id: "",
   incident_type: "robbery",
   ob_number: "",
+  contact_phone: "",
   description: "",
   latitude: "",
   longitude: "",
@@ -437,6 +438,7 @@ const IncidentsPage = () => {
       facility: facilityId,
       incident_type: incidentForm.incident_type,
       ob_number: incidentForm.ob_number.trim(),
+      contact_phone: incidentForm.contact_phone.trim(),
       description: incidentForm.description.trim(),
       latitude: incidentForm.latitude,
       longitude: incidentForm.longitude,
@@ -584,6 +586,16 @@ const IncidentsPage = () => {
             </div>
 
             <div>
+              <label style={styles.label}>Reporter Phone</label>
+              <input
+                style={styles.input}
+                value={incidentForm.contact_phone}
+                onChange={(event) => setIncidentForm((prev) => ({ ...prev, contact_phone: event.target.value }))}
+                placeholder="+2547XXXXXXXX"
+              />
+            </div>
+
+            <div>
               <label style={styles.label}>Occurred At</label>
               <input
                 style={styles.input}
@@ -674,6 +686,7 @@ const IncidentsPage = () => {
                 <tr>
                   <th style={styles.th}>OB</th>
                   <th style={styles.th}>Type</th>
+                  <th style={styles.th}>Proxy Phone</th>
                   <th style={styles.th}>Facility</th>
                   <th style={styles.th}>Occurred</th>
                   <th style={styles.th}>Status</th>
@@ -685,6 +698,7 @@ const IncidentsPage = () => {
                   <tr key={incident.id}>
                     <td style={styles.tdStrong}>{incident.ob_number}</td>
                     <td style={styles.td}>{incident.incident_type}</td>
+                    <td style={styles.td}>{incident.proxy_phone_number || "-"}</td>
                     <td style={styles.td}>{incident.facility_name || incident.facility || "-"}</td>
                     <td style={styles.td}>{incident.occurred_at || "-"}</td>
                     <td style={styles.td}>{formatStatus(incident.follow_up_status || "open")}</td>

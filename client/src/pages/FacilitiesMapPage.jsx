@@ -79,9 +79,8 @@ const FacilitiesDistanceMap = ({
   center,
   facilities,
   incidents,
-  fromId,
-  toId,
-  onMarkerSelect,
+  selectedFacilityId,
+  onFacilitySelect,
   isDark,
   distanceKm,
   distanceFrom,
@@ -102,13 +101,12 @@ const FacilitiesDistanceMap = ({
 
   const markerIcon = useCallback((facility) => {
     const facilityId = facility?.id;
-    const isFrom = facilityId === fromId;
-    const isTo = facilityId === toId;
+    const isSelected = facilityId === selectedFacilityId;
     const typeKey = facility?.facility_type || "default";
     const colors = getFacilityTypeColor(typeKey);
     const facilityGlyph = facilityIcons?.[typeKey] || "📍";
-    const fontSize = isFrom || isTo ? 34 : 30;
-    const ringColor = isFrom ? "#2563eb" : isTo ? "#7c3aed" : colors.secondary;
+    const fontSize = isSelected ? 34 : 30;
+    const ringColor = isSelected ? "#2563eb" : colors.secondary;
 
     const svgString = `
       <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
@@ -129,7 +127,7 @@ const FacilitiesDistanceMap = ({
             ${facilityGlyph}
           </text>
           ${
-            isFrom || isTo
+            isSelected
               ? `<circle cx="28" cy="28" r="22" fill="none" stroke="${ringColor}" stroke-width="2.5" stroke-dasharray="4 4" opacity="0.65" />`
               : ""
           }
@@ -142,7 +140,7 @@ const FacilitiesDistanceMap = ({
       scaledSize: new window.google.maps.Size(56, 56),
       anchor: new window.google.maps.Point(28, 28),
     };
-  }, [facilityIcons, fromId, toId]);
+  }, [facilityIcons, selectedFacilityId]);
 
   const incidentMarkerIcon = useCallback((incident) => {
     const severity = incident?.severity || 'medium';
@@ -326,7 +324,7 @@ const FacilitiesDistanceMap = ({
           lastClickMarkerIdRef.current = null;
         } else {
           // Single click: select for distance calculation (no info window)
-          onMarkerSelect(facility);
+          onFacilitySelect(facility);
 
           if (clickInfoRef.current) {
             clickInfoRef.current.close();
@@ -441,7 +439,7 @@ const FacilitiesDistanceMap = ({
     });
 
     markerEntriesRef.current = entries;
-  }, [facilities, incidents, onMarkerSelect, markerIcon, incidentMarkerIcon, showFacilityInfo, showDistanceFeedback, facilityById]);
+  }, [facilities, incidents, onFacilitySelect, markerIcon, incidentMarkerIcon, showFacilityInfo, showDistanceFeedback, facilityById]);
 
   useEffect(() => {
     if (!window.google?.maps) return;
@@ -454,7 +452,7 @@ const FacilitiesDistanceMap = ({
       };
       entry.marker.setIcon(markerIcon(facility));
     });
-  }, [fromId, toId, markerIcon]);
+  }, [selectedFacilityId, markerIcon]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google?.maps) return;
@@ -481,9 +479,7 @@ const FacilitiesDistanceMap = ({
       lineRef.current = null;
     }
 
-    const fromFacility = facilities.find((item) => item.id === fromId);
-    const toFacility = facilities.find((item) => item.id === toId);
-    if (!fromFacility || !toFacility) return;
+    if (!distanceFrom || !distanceTo) return;
 
     const lineSymbol = {
       path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
@@ -494,8 +490,8 @@ const FacilitiesDistanceMap = ({
     lineRef.current = new window.google.maps.Polyline({
       map: mapRef.current,
       path: [
-        { lat: fromFacility.lat, lng: fromFacility.lng },
-        { lat: toFacility.lat, lng: toFacility.lng },
+        { lat: distanceFrom.lat, lng: distanceFrom.lng },
+        { lat: distanceTo.lat, lng: distanceTo.lng },
       ],
       strokeColor: "#ef4444",
       strokeOpacity: 0.95,
@@ -505,7 +501,7 @@ const FacilitiesDistanceMap = ({
         offset: '50%',
       }],
     });
-  }, [facilities, fromId, toId]);
+  }, [distanceFrom, distanceTo]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google?.maps) return;
@@ -552,7 +548,7 @@ const FacilitiesMapPage = () => {
   const [facilities, setFacilities] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
-  const [distanceForm, setDistanceForm] = useState({ from_id: "", to_id: "" });
+  const [distanceForm, setDistanceForm] = useState({ incident_id: "", facility_id: "" });
   const [distanceResult, setDistanceResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState({ type: "", text: "" });
@@ -762,24 +758,24 @@ const FacilitiesMapPage = () => {
     return map;
   }, [mappableFacilities]);
 
-  const fromFacility = useMemo(
-    () => facilityById.get(String(distanceForm.from_id || "")) || null,
-    [facilityById, distanceForm.from_id]
+  const selectedIncident = useMemo(
+    () => mappableIncidents.find((incident) => String(incident.id) === String(distanceForm.incident_id || "")) || null,
+    [mappableIncidents, distanceForm.incident_id]
   );
 
-  const toFacility = useMemo(
-    () => facilityById.get(String(distanceForm.to_id || "")) || null,
-    [facilityById, distanceForm.to_id]
+  const selectedFacility = useMemo(
+    () => facilityById.get(String(distanceForm.facility_id || "")) || null,
+    [facilityById, distanceForm.facility_id]
   );
 
   useEffect(() => {
-    if (!fromFacility || !toFacility) {
+    if (!selectedIncident || !selectedFacility) {
       setDistanceResult(null);
       return;
     }
-    const distanceKm = haversineKm(fromFacility, toFacility);
-    setDistanceResult({ distance_km: distanceKm, from: fromFacility, to: toFacility });
-  }, [fromFacility, toFacility]);
+    const distanceKm = haversineKm(selectedIncident, selectedFacility);
+    setDistanceResult({ distance_km: distanceKm, from: selectedIncident, to: selectedFacility });
+  }, [selectedIncident, selectedFacility]);
 
   const mapCenter = useMemo(() => {
     if (mappableFacilities.length === 0) return DEFAULT_MAP_CENTER;
@@ -791,43 +787,26 @@ const FacilitiesMapPage = () => {
     return [totals.lat / mappableFacilities.length, totals.lng / mappableFacilities.length];
   }, [mappableFacilities]);
 
-  const handleMarkerSelect = (facility) => {
-    setDistanceResult(null);
-    setDistanceForm((prev) => {
-      if (!prev.from_id || (prev.from_id && prev.to_id)) {
-        return { from_id: facility.id, to_id: "" };
-      }
-      if (prev.from_id === facility.id) {
-        return { from_id: facility.id, to_id: "" };
-      }
-      return { from_id: prev.from_id, to_id: facility.id };
-    });
+  const handleFacilitySelect = (facility) => {
+    setDistanceForm((prev) => ({ ...prev, facility_id: facility.id }));
   };
 
   const calculateDistance = async (event) => {
     event.preventDefault();
 
-    if (!distanceForm.from_id || !distanceForm.to_id) {
-      showBanner("error", "Select both facilities first.");
-      return;
-    }
-
-    if (distanceForm.from_id === distanceForm.to_id) {
-      showBanner("error", "Select two different facilities.");
+    if (!distanceForm.incident_id || !distanceForm.facility_id) {
+      showBanner("error", "Select an incident and a facility first.");
       return;
     }
 
     try {
-      const params = new URLSearchParams(distanceForm).toString();
-      const res = await apiFetch(`${SECURITY_API}/facilities/distance/?${params}`, { headers });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(getErrorMessage(data, "Failed to calculate distance"));
+      if (!selectedIncident || !selectedFacility) {
+        throw new Error("Selected incident or facility is missing coordinates.");
       }
-
-      setDistanceResult(data);
-      showBanner("success", `Distance computed: ${data.distance_km} km`);
+      const distanceKm = haversineKm(selectedIncident, selectedFacility);
+      const result = { distance_km: distanceKm, from: selectedIncident, to: selectedFacility };
+      setDistanceResult(result);
+      showBanner("success", `Distance computed: ${distanceKm.toFixed(2)} km`);
     } catch (error) {
       showBanner("error", error.message || "Failed to calculate distance");
     }
@@ -875,7 +854,7 @@ const FacilitiesMapPage = () => {
             onChange={(event) => {
               setSelectedInstitutionId(event.target.value);
               setDistanceResult(null);
-              setDistanceForm({ from_id: "", to_id: "" });
+              setDistanceForm({ incident_id: "", facility_id: "" });
             }}
           >
             <option value="">🏢 All Institutions</option>
@@ -900,11 +879,11 @@ const FacilitiesMapPage = () => {
         <div style={styles.instructionDivider}>|</div>
         <div style={styles.instructionItem}>
           <span style={styles.instructionIcon}>🖱️</span>
-          <span>From: {fromFacility?.name || 'Not selected'}</span>
+          <span>Incident: {selectedIncident?.ob_number || 'Not selected'}</span>
         </div>
         <div style={styles.instructionItem}>
           <span style={styles.instructionIcon}>🖱️</span>
-          <span>To: {toFacility?.name || 'Not selected'}</span>
+          <span>Facility: {selectedFacility?.name || 'Not selected'}</span>
         </div>
       </div>
 
@@ -955,13 +934,12 @@ const FacilitiesMapPage = () => {
           center={mapCenter}
           facilities={mappableFacilities}
           incidents={mappableIncidents}
-          fromId={distanceForm.from_id}
-          toId={distanceForm.to_id}
-          onMarkerSelect={handleMarkerSelect}
+          selectedFacilityId={distanceForm.facility_id}
+          onFacilitySelect={handleFacilitySelect}
           isDark={isDark}
           distanceKm={distanceResult?.distance_km}
-          distanceFrom={fromFacility}
-          distanceTo={toFacility}
+          distanceFrom={selectedIncident}
+          distanceTo={selectedFacility}
           facilityById={facilityById}
           facilityIcons={frontendSettings.facilityIcons}
           incidentIcons={frontendSettings.incidentIcons}
@@ -970,37 +948,37 @@ const FacilitiesMapPage = () => {
 
       <section style={styles.card}>
         <div style={styles.cardHeader}>
-          <h2 style={styles.cardTitle}>📏 Distance Calculator</h2>
+          <h2 style={styles.cardTitle}>📏 Incident to Facility Distance</h2>
           <div style={styles.cardBadge}>Click markers to select</div>
         </div>
-        <p style={styles.hint}>Click two markers in sequence (first for From, second for To), or use dropdowns below.</p>
+        <p style={styles.hint}>Choose an incident and a facility to measure response distance directly on the map.</p>
         <form onSubmit={calculateDistance} style={styles.formGrid}>
           <div>
             <label style={styles.label}>
-              <span style={styles.labelIcon}>📍</span> From
+              <span style={styles.labelIcon}>🚨</span> Incident
             </label>
             <select
               style={styles.input}
-              value={distanceForm.from_id}
-              onChange={(event) => setDistanceForm((prev) => ({ ...prev, from_id: event.target.value }))}
+              value={distanceForm.incident_id}
+              onChange={(event) => setDistanceForm((prev) => ({ ...prev, incident_id: event.target.value }))}
               required
             >
-              <option value="">Select facility</option>
-              {mappableFacilities.map((facility) => (
-                <option key={facility.id} value={facility.id}>
-                  {facility.name}
+              <option value="">Select incident</option>
+              {mappableIncidents.map((incident) => (
+                <option key={incident.id || `${incident.ob_number}-${incident.occurred_at}`} value={incident.id}>
+                  {(incident.ob_number || "Incident")} - {incident.incident_type || "Unknown"}
                 </option>
               ))}
             </select>
           </div>
           <div>
             <label style={styles.label}>
-              <span style={styles.labelIcon}>🏁</span> To
+              <span style={styles.labelIcon}>📍</span> Facility
             </label>
             <select
               style={styles.input}
-              value={distanceForm.to_id}
-              onChange={(event) => setDistanceForm((prev) => ({ ...prev, to_id: event.target.value }))}
+              value={distanceForm.facility_id}
+              onChange={(event) => setDistanceForm((prev) => ({ ...prev, facility_id: event.target.value }))}
               required
             >
               <option value="">Select facility</option>
@@ -1024,7 +1002,7 @@ const FacilitiesMapPage = () => {
                 <strong>{typeof distanceResult.distance_km === "number" ? distanceResult.distance_km.toFixed(2) : distanceResult.distance_km} km</strong>
               </div>
               <div style={styles.resultPath}>
-                {distanceResult.from.name} ? {distanceResult.to.name}
+                {(distanceResult.from.ob_number || distanceResult.from.incident_type || "Incident")} to {distanceResult.to.name}
               </div>
             </div>
           </div>

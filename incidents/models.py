@@ -5,6 +5,10 @@ from accounts.models import Institution
 from security.models import SecurityFacility
 
 
+def build_proxy_phone_from_id(incident_id):
+    return f"+254799{int(incident_id):06d}"
+
+
 class Incident(models.Model):
     SOURCE_INTERNAL = "internal"
     SOURCE_PUBLIC = "public"
@@ -33,6 +37,8 @@ class Incident(models.Model):
     occurred_at = models.DateTimeField()
     reported_at = models.DateTimeField(auto_now_add=True)
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default=SOURCE_INTERNAL)
+    contact_phone = models.CharField(max_length=32, blank=True, default="")
+    proxy_phone_number = models.CharField(max_length=32, null=True, blank=True, unique=True)
     reporter_name = models.CharField(max_length=255, blank=True, default="")
     reporter_contact = models.CharField(max_length=255, blank=True, default="")
     public_location_hint = models.CharField(max_length=255, blank=True, default="")
@@ -53,6 +59,19 @@ class Incident(models.Model):
 
     def __str__(self):
         return f"{self.incident_type} - {self.ob_number}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.proxy_phone_number:
+            return
+        if not (self.contact_phone or self.reporter_contact):
+            return
+
+        proxy_phone = build_proxy_phone_from_id(self.pk)
+        type(self).objects.filter(pk=self.pk, proxy_phone_number__isnull=True).update(
+            proxy_phone_number=proxy_phone
+        )
+        self.proxy_phone_number = proxy_phone
 
 
 class IncidentUpdate(models.Model):

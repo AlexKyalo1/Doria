@@ -147,6 +147,7 @@ const PublicIncidentReportPage = () => {
               <div>Institution: {result.match?.institution_name || "-"}</div>
               <div>Facility: {result.match?.facility_name || "Not specific"}</div>
               <div>Reference: {result.incident?.reference || "-"}</div>
+              <div>Proxy phone: {result.incident?.proxy_phone_number || "-"}</div>
             </div>
           ) : (
             <div style={styles.resultMeta}>
@@ -266,13 +267,13 @@ const PublicIncidentReportPage = () => {
       </form>
 
       <form onSubmit={handleInquiry} style={styles.inquiryCard}>
-        <h2 style={styles.inquiryTitle}>Check your report status and live intel</h2>
+        <h2 style={styles.inquiryTitle}>Check your report status using OB number or reference</h2>
         <p style={styles.inquirySubtitle}>
-          Enter your report reference and the same contact used during submission to see current status and nearby live security signals.
+          Enter your OB number or public report reference and the same contact used during submission to see current status and nearby live security signals.
         </p>
         <div style={styles.formGrid}>
           <div>
-            <label style={styles.label}>Report reference</label>
+            <label style={styles.label}>OB number or reference</label>
             <input
               value={inquiryForm.reference}
               onChange={(event) => setInquiryForm((prev) => ({ ...prev, reference: event.target.value }))}

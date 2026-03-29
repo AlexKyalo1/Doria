@@ -88,7 +88,7 @@ const DashboardPage = () => {
   );
 
   const quickActions = [
-    { label: "5-Min Demo", path: "/demo-guide", icon: "\u23f1\ufe0f" },
+    { label: "5-Min Site Tour", path: "/demo-guide", icon: "\u23f1\ufe0f" },
     { label: "Create Institution", path: "/institutions", icon: "+" },
     { label: "Manage Members", path: "/institutions", icon: "\ud83d\udc65" },
     { label: "AI Insights", path: "/ai/insights", icon: "\ud83e\udde0" },

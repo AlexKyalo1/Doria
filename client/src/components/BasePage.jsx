@@ -19,7 +19,7 @@ const routeTitles = {
   "/ai/insights": "AI Insights",
   "/settings": "Settings",
   "/billing": "Billing",
-  "/demo-guide": "5-Minute Demo",
+  "/demo-guide": "5-Minute Site Tour",
   "/dashboard": "Dashboard",
   "/api-platform": "API Platform",
   "/admin/users": "Admin Users",
@@ -83,7 +83,7 @@ const BasePage = () => {
       label: "Core",
       icon: "\u{1F4CC}",
       items: [
-        { to: "/demo-guide", label: "5-Min Demo", icon: "\u{23F1}\u{FE0F}" },
+        { to: "/demo-guide", label: "5-Min Site Tour", icon: "\u{23F1}\u{FE0F}" },
         { to: "/dashboard", label: "Dashboard", icon: "\u{1F4CA}" },
         { to: "/ai/insights", label: "AI Insights", icon: "\u{1F9E0}" },
         { to: "/api-platform", label: "API Platform", icon: "\u{1F517}" },
@@ -111,6 +111,7 @@ const BasePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [impersonationInfo, setImpersonationInfo] = useState(getImpersonationInfo());
   const location = useLocation();
+  const isPreview = new URLSearchParams(location.search).get("demoPreview") === "1";
 
   useEffect(() => {
     const onSettingsChange = () => setFrontendSettings(getFrontendSettings());
@@ -244,6 +245,28 @@ const BasePage = () => {
         menuColor: "#166534",
         sidebarGradient: "linear-gradient(180deg, #0f5132 0%, #166534 100%)",
       };
+
+  if (isPreview) {
+    return (
+      <main
+        style={{
+          ...previewShellStyle,
+          backgroundColor: theme.mainBg,
+          color: isDark ? "#e5e7eb" : "#0f5132",
+        }}
+      >
+        <div
+          style={{
+            ...previewContentStyle,
+            backgroundColor: isDark ? "#0f172a" : "#f0fdf4",
+          }}
+        >
+          <Outlet />
+        </div>
+      </main>
+    );
+  }
+
 return (
     <div style={{ ...containerStyle, backgroundColor: theme.mainBg }}>
       <aside
@@ -384,6 +407,19 @@ const containerStyle = {
   display: "flex",
   height: "100vh",
   fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
+};
+
+const previewShellStyle = {
+  minHeight: "100vh",
+  padding: "10px",
+  overflow: "hidden",
+  fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
+};
+
+const previewContentStyle = {
+  minHeight: "calc(100vh - 20px)",
+  borderRadius: "16px",
+  overflow: "hidden",
 };
 
 const sidebarStyle = {
@@ -675,8 +711,6 @@ const groupItemsStyle = {
 
 
 export default BasePage;
-
-
 
 
 

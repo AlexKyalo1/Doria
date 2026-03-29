@@ -244,6 +244,7 @@ class ChatConversationIncidentCreateSerializer(serializers.Serializer):
             "facility": facility.id if facility else None,
             "institution": conversation.workspace.institution_id,
             "occurred_at": occurred_at.isoformat(),
+            "contact_phone": conversation.customer_contact,
             **validated_data,
         }
         incident_serializer = IncidentSerializer(data=incident_payload, context={"request": request})
