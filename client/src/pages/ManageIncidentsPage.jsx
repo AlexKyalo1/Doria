@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
 import { apiFetch } from "../utils/apiFetch";
-
-const ACCOUNTS_API = "http://127.0.0.1:8000/api/accounts";
-const SECURITY_API = "http://127.0.0.1:8000/api/security";
-const INCIDENTS_API = "http://127.0.0.1:8000/api/incidents";
+import {
+  ACCOUNTS_API_BASE as ACCOUNTS_API,
+  INCIDENTS_API_BASE as INCIDENTS_API,
+  SECURITY_API_BASE as SECURITY_API,
+} from "../utils/apiBase";
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 const INCIDENT_TYPES = [
@@ -99,6 +100,18 @@ const ResponseDirectionsMap = ({ ready, origin, destination, onRouteComputed }) 
     if (!mapRef.current || !window.google?.maps) {
       return;
     }
+    window.google.maps.event.trigger(mapRef.current, "resize");
+    if (destination) {
+      mapRef.current.panTo(destination);
+    } else if (origin) {
+      mapRef.current.panTo(origin);
+    }
+  }, [destination, origin, ready]);
+
+  useEffect(() => {
+    if (!mapRef.current || !window.google?.maps) {
+      return;
+    }
 
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
@@ -184,11 +197,24 @@ const ManageIncidentsPage = () => {
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState({ type: "", text: "" });
+  const [institutions, setInstitutions] = useState([]);
   const [updateForm, setUpdateForm] = useState(defaultUpdateForm);
   const [updateMessage, setUpdateMessage] = useState("");
   const [updateSaving, setUpdateSaving] = useState(false);
+  const [shareForm, setShareForm] = useState({ institutionId: "", accessLevel: "contributor" });
+  const [shareMessage, setShareMessage] = useState("");
+  const [shareSaving, setShareSaving] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [commentMessage, setCommentMessage] = useState("");
+  const [commentSaving, setCommentSaving] = useState(false);
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
   const [routeSummary, setRouteSummary] = useState(null);
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
+  const [newsQuery, setNewsQuery] = useState("");
+  const [newsLinks, setNewsLinks] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsMessage, setNewsMessage] = useState("");
+  const [newsReloadToken, setNewsReloadToken] = useState(0);
   const incidentParamHandledRef = useRef(false);
 
   const headers = useMemo(
@@ -230,6 +256,10 @@ const ManageIncidentsPage = () => {
     setTimeout(() => setBanner({ type: "", text: "" }), 3500);
   };
 
+  const replaceIncidentInState = (incidentId, nextIncident) => {
+    setIncidents((prev) => prev.map((item) => (item.id === incidentId ? { ...item, ...nextIncident } : item)));
+  };
+
   const loadProfile = async () => {
     const res = await apiFetch(`${ACCOUNTS_API}/profile/`, { headers });
     const data = await res.json();
@@ -260,6 +290,18 @@ const ManageIncidentsPage = () => {
     }
   };
 
+  const loadInstitutions = async () => {
+    const res = await apiFetch(`${ACCOUNTS_API}/institutions/`, { headers });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(getErrorMessage(data, "Failed to load institutions"));
+    }
+
+    const list = Array.isArray(data?.institutions) ? data.institutions.filter(Boolean) : [];
+    setInstitutions(list);
+    return list;
+  };
+
   const loadIncidents = async () => {
     const res = await apiFetch(`${INCIDENTS_API}/`, { headers });
     const data = await res.json();
@@ -285,7 +327,7 @@ const ManageIncidentsPage = () => {
       try {
         setLoading(true);
         const user = await loadProfile();
-        await Promise.all([loadFacilities(user), loadIncidents()]);
+        await Promise.all([loadFacilities(user), loadIncidents(), loadInstitutions()]);
         showBanner("success", "Incident manager ready.");
       } catch (error) {
         showBanner("error", error.message || "Failed to load incident manager");
@@ -300,6 +342,7 @@ const ManageIncidentsPage = () => {
 
   useEffect(() => {
     if (!GOOGLE_MAPS_API_KEY) {
+      showBanner("error", "Google Maps key missing. Set REACT_APP_GOOGLE_MAPS_API_KEY.");
       return;
     }
 
@@ -476,6 +519,78 @@ const ManageIncidentsPage = () => {
     setUpdateMessage("");
   }, [selectedIncident]);
 
+  useEffect(() => {
+    if (!selectedIncident) {
+      setShareForm({ institutionId: "", accessLevel: "contributor" });
+      setShareMessage("");
+      setCommentBody("");
+      setCommentMessage("");
+      setNewsQuery("");
+      setNewsLinks([]);
+      setNewsMessage("");
+      return;
+    }
+
+    setShareMessage("");
+    setCommentMessage("");
+  }, [selectedIncident]);
+
+  useEffect(() => {
+    if (!selectedIncident) {
+      return;
+    }
+
+    const loadNewsLinks = async () => {
+      setNewsLoading(true);
+      setNewsMessage("");
+      try {
+        const res = await apiFetch(`${INCIDENTS_API}/${selectedIncident.id}/news-links/`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ limit: 5 }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(getErrorMessage(data, "Failed to load related news"));
+        }
+        setNewsQuery(data.query || "");
+        setNewsLinks(Array.isArray(data.articles) ? data.articles : []);
+        if (!Array.isArray(data.articles) || data.articles.length === 0) {
+          setNewsMessage("No matching published news links found for this incident yet.");
+        }
+      } catch (error) {
+        setNewsQuery("");
+        setNewsLinks([]);
+        setNewsMessage(error.message || "Failed to load related news");
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+
+    loadNewsLinks();
+  }, [headers, newsReloadToken, selectedIncident]);
+
+  const incidentInstitutionIds = useMemo(() => {
+    if (!selectedIncident) {
+      return new Set();
+    }
+
+    const ids = new Set();
+    if (selectedIncident.institution_hash) {
+      ids.add(String(selectedIncident.institution_hash));
+    }
+    (selectedIncident.collaboration || []).forEach((entry) => {
+      if (entry?.institution_id) {
+        ids.add(String(entry.institution_id));
+      }
+    });
+    return ids;
+  }, [selectedIncident]);
+
+  const shareableInstitutions = useMemo(() => {
+    return institutions.filter((institution) => !incidentInstitutionIds.has(String(institution.id)));
+  }, [incidentInstitutionIds, institutions]);
+
   const stats = useMemo(() => {
     const total = filteredIncidents.length;
     const open = filteredIncidents.filter((incident) => (incident.follow_up_status || "open") === "open").length;
@@ -511,7 +626,7 @@ const ManageIncidentsPage = () => {
         throw new Error(data?.error || "Failed to save incident update");
       }
 
-      setIncidents((prev) => prev.map((item) => (item.id === selectedIncident.id ? { ...item, ...data } : item)));
+      replaceIncidentInState(selectedIncident.id, data);
       setUpdateForm((prev) => ({
         ...prev,
         note: "",
@@ -524,6 +639,69 @@ const ManageIncidentsPage = () => {
       setUpdateMessage(error.message || "Failed to save");
     } finally {
       setUpdateSaving(false);
+    }
+  };
+
+  const shareIncident = async () => {
+    if (!selectedIncident || !shareForm.institutionId) {
+      setShareMessage("Choose an institution first.");
+      return;
+    }
+
+    setShareSaving(true);
+    setShareMessage("Sharing incident...");
+    try {
+      const res = await apiFetch(`${INCIDENTS_API}/${selectedIncident.id}/collaborators/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          institution_id: shareForm.institutionId,
+          access_level: shareForm.accessLevel,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data, "Failed to share incident"));
+      }
+
+      replaceIncidentInState(selectedIncident.id, data);
+      setShareForm({ institutionId: "", accessLevel: shareForm.accessLevel });
+      setShareMessage("Institution added to the incident.");
+      showBanner("success", `Shared ${selectedIncident.ob_number} for collaboration.`);
+    } catch (error) {
+      setShareMessage(error.message || "Failed to share incident");
+    } finally {
+      setShareSaving(false);
+    }
+  };
+
+  const saveComment = async () => {
+    if (!selectedIncident || !commentBody.trim()) {
+      setCommentMessage("Add a note before saving.");
+      return;
+    }
+
+    setCommentSaving(true);
+    setCommentMessage("Saving collaboration note...");
+    try {
+      const res = await apiFetch(`${INCIDENTS_API}/${selectedIncident.id}/comments/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ body: commentBody.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data, "Failed to save collaboration note"));
+      }
+
+      replaceIncidentInState(selectedIncident.id, data);
+      setCommentBody("");
+      setCommentMessage("Collaboration note saved.");
+      showBanner("success", `Added a note to ${selectedIncident.ob_number}.`);
+    } catch (error) {
+      setCommentMessage(error.message || "Failed to save collaboration note");
+    } finally {
+      setCommentSaving(false);
     }
   };
 
@@ -543,6 +721,9 @@ const ManageIncidentsPage = () => {
           </p>
         </div>
         <div style={styles.headerActions}>
+          <button type="button" style={styles.secondaryButton} onClick={() => (window.location.href = "/incidents/area-intelligence")}>
+            Open area intelligence
+          </button>
           <button type="button" style={styles.secondaryButton} onClick={() => (window.location.href = "/incidents")}>
             Back to overview
           </button>
@@ -617,10 +798,26 @@ const ManageIncidentsPage = () => {
               <h2 style={styles.cardTitle}>Incident Queue</h2>
               <p style={styles.hint}>Select a row to review and update the case.</p>
             </div>
-            <div style={styles.queueCount}>{loading ? "Loading..." : `${filteredIncidents.length} incidents`}</div>
+            <div style={styles.queueActions}>
+              <div style={styles.queueCount}>{loading ? "Loading..." : `${filteredIncidents.length} incidents`}</div>
+              <button
+                type="button"
+                style={styles.secondaryButton}
+                onClick={() => setQueueCollapsed((prev) => !prev)}
+              >
+                {queueCollapsed ? "Expand queue" : "Collapse queue"}
+              </button>
+            </div>
           </div>
 
-          {filteredIncidents.length === 0 ? (
+          {queueCollapsed && selectedIncident ? (
+            <div style={styles.queueSummary}>
+              <strong>{selectedIncident.ob_number}</strong>
+              <span>{selectedIncident.incident_type}</span>
+              <span>{selectedIncident.facility_name || selectedIncident.facility || "No facility"}</span>
+              <span>{formatStatus(selectedIncident.follow_up_status || "open")}</span>
+            </div>
+          ) : filteredIncidents.length === 0 ? (
             <p style={styles.muted}>No incidents match the current filters.</p>
           ) : (
             <div style={styles.tableWrap}>
@@ -641,7 +838,10 @@ const ManageIncidentsPage = () => {
                       <tr
                         key={incident.id}
                         style={active ? styles.activeRow : undefined}
-                        onClick={() => setSelectedIncidentId(String(incident.id))}
+                        onClick={() => {
+                          setSelectedIncidentId(String(incident.id));
+                          setQueueCollapsed(true);
+                        }}
                       >
                         <td style={styles.tdStrong}>{incident.ob_number}</td>
                         <td style={styles.td}>{incident.incident_type}</td>
@@ -661,7 +861,7 @@ const ManageIncidentsPage = () => {
           )}
         </div>
 
-        <aside style={styles.detailCard}>
+        <section style={styles.detailCard}>
           {!selectedIncident ? (
             <div style={styles.emptyState}>
               <h3 style={styles.emptyTitle}>No incident selected</h3>
@@ -711,6 +911,103 @@ const ManageIncidentsPage = () => {
                 <p style={styles.descriptionText}>{selectedIncident.description || "No description captured."}</p>
               </div>
 
+              <div style={styles.newsCard}>
+                <div style={styles.sectionHead}>
+                  <div>
+                    <h3 style={styles.timelineTitle}>AI News Leads</h3>
+                    <p style={styles.hint}>Published news links can help investigators connect this case to external reporting.</p>
+                  </div>
+                  <button type="button" style={styles.secondaryButton} onClick={() => setNewsReloadToken((prev) => prev + 1)} disabled={newsLoading}>
+                    {newsLoading ? "Refreshing..." : "Refresh"}
+                  </button>
+                </div>
+                {newsQuery ? <div style={styles.newsQuery}>Query: {newsQuery}</div> : null}
+                {newsMessage ? <p style={styles.muted}>{newsMessage}</p> : null}
+                {newsLinks.length > 0 ? (
+                  <div style={styles.timelineList}>
+                    {newsLinks.map((item) => (
+                      <article key={item.link} style={styles.timelineEntry}>
+                        <div style={styles.timelineTop}>
+                          <span style={styles.timelinePill}>{item.matching_signal || "Lead"}</span>
+                          <span style={styles.timelineMeta}>{item.source || "News"} | {formatDateTime(item.published_at)}</span>
+                        </div>
+                        <a href={item.link} target="_blank" rel="noreferrer" style={styles.newsLink}>
+                          {item.title}
+                        </a>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div style={styles.collaborationCard}>
+                <div style={styles.sectionHead}>
+                  <div>
+                    <h3 style={styles.timelineTitle}>Institution Collaboration</h3>
+                    <p style={styles.hint}>Share the case with partner institutions and keep ownership visible.</p>
+                  </div>
+                </div>
+
+                <div style={styles.collaborationList}>
+                  <div style={styles.collaborationChip}>
+                    <span style={styles.collaborationName}>Owning institution</span>
+                    <span style={styles.collaborationMeta}>
+                      {selectedIncident.institution_name || "Linked through facility"}
+                    </span>
+                  </div>
+                  {(selectedIncident.collaboration || []).map((entry) => (
+                    <div key={entry.id} style={styles.collaborationChip}>
+                      <span style={styles.collaborationName}>{entry.institution_name}</span>
+                      <span style={styles.collaborationMeta}>
+                        {formatAccessLevel(entry.access_level)} | shared by {entry.shared_by_name || "Unknown user"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={styles.inlineGrid}>
+                  <div>
+                    <label style={styles.label}>Add institution</label>
+                    <select
+                      style={styles.input}
+                      value={shareForm.institutionId}
+                      onChange={(event) => setShareForm((prev) => ({ ...prev, institutionId: event.target.value }))}
+                    >
+                      <option value="">Select institution</option>
+                      {shareableInstitutions.map((institution) => (
+                        <option key={institution.id} value={institution.id}>
+                          {institution.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={styles.label}>Access level</label>
+                    <select
+                      style={styles.input}
+                      value={shareForm.accessLevel}
+                      onChange={(event) => setShareForm((prev) => ({ ...prev, accessLevel: event.target.value }))}
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="contributor">Contributor</option>
+                      <option value="lead">Lead</option>
+                    </select>
+                  </div>
+                </div>
+                {shareMessage && <div style={styles.message}>{shareMessage}</div>}
+                <div style={styles.actionRow}>
+                  <div />
+                  <button
+                    type="button"
+                    style={styles.primaryButton}
+                    onClick={shareIncident}
+                    disabled={shareSaving || shareableInstitutions.length === 0}
+                  >
+                    {shareSaving ? "Sharing..." : "Share incident"}
+                  </button>
+                </div>
+              </div>
+
               <div style={styles.responseCard}>
                 <div style={styles.sectionHead}>
                   <div>
@@ -757,6 +1054,53 @@ const ManageIncidentsPage = () => {
                     Open directions
                   </button>
                 </div>
+              </div>
+
+              <div style={styles.formBlock}>
+                <div>
+                  <label style={styles.label}>Collaboration note</label>
+                  <textarea
+                    style={styles.textarea}
+                    rows={4}
+                    value={commentBody}
+                    onChange={(event) => setCommentBody(event.target.value)}
+                    placeholder="Capture what your institution did, decided, or needs from partners."
+                  />
+                </div>
+                {commentMessage && <div style={styles.message}>{commentMessage}</div>}
+                <div style={styles.actionRow}>
+                  <div />
+                  <button type="button" style={styles.secondaryButton} onClick={saveComment} disabled={commentSaving}>
+                    {commentSaving ? "Saving..." : "Save collaboration note"}
+                  </button>
+                </div>
+              </div>
+
+              <div style={styles.timelineCard}>
+                <div style={styles.sectionHead}>
+                  <div>
+                    <h3 style={styles.timelineTitle}>Collaboration Notes</h3>
+                    <p style={styles.hint}>Separate case notes keep discussion visible without overwriting updates.</p>
+                  </div>
+                </div>
+
+                {(selectedIncident.comments || []).length === 0 ? (
+                  <p style={styles.muted}>No collaboration notes yet.</p>
+                ) : (
+                  <div style={styles.timelineList}>
+                    {selectedIncident.comments.map((comment) => (
+                      <article key={comment.id} style={styles.timelineEntry}>
+                        <div style={styles.timelineTop}>
+                          <span style={styles.timelinePill}>Comment</span>
+                          <span style={styles.timelineMeta}>
+                            {comment.created_by_name || "Unknown user"} | {formatActorContext(comment)} | {formatDateTime(comment.created_at)}
+                          </span>
+                        </div>
+                        <p style={styles.timelineText}>{comment.body}</p>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={styles.formBlock}>
@@ -834,28 +1178,30 @@ const ManageIncidentsPage = () => {
               <div style={styles.timelineCard}>
                 <div style={styles.sectionHead}>
                   <div>
-                    <h3 style={styles.timelineTitle}>Update History</h3>
-                    <p style={styles.hint}>Every entry records who touched the incident and what they changed.</p>
+                    <h3 style={styles.timelineTitle}>Collaboration Timeline</h3>
+                    <p style={styles.hint}>This audit trail shows who changed, commented on, or shared the incident.</p>
                   </div>
                 </div>
 
-                {(selectedIncident.updates || []).length === 0 ? (
-                  <p style={styles.muted}>No update history yet.</p>
+                {(selectedIncident.activity || []).length === 0 ? (
+                  <p style={styles.muted}>No collaboration activity yet.</p>
                 ) : (
                   <div style={styles.timelineList}>
-                    {selectedIncident.updates.map((update) => (
-                      <article key={update.id} style={styles.timelineEntry}>
+                    {selectedIncident.activity.map((entry) => (
+                      <article key={entry.id} style={styles.timelineEntry}>
                         <div style={styles.timelineTop}>
-                          <span style={statusBadgeStyle(update.status || "open")}>{formatStatus(update.status || "open")}</span>
+                          <span style={styles.timelinePill}>{formatActivityLabel(entry.action_type)}</span>
                           <span style={styles.timelineMeta}>
-                            {update.created_by_name || "Unknown user"} • {formatDateTime(update.created_at)}
+                            {entry.actor_name || "Unknown user"} | {formatActorContext(entry)} | {formatDateTime(entry.created_at)}
                           </span>
                         </div>
-                        {update.note && <p style={styles.timelineText}><strong>Changed:</strong> {update.note}</p>}
-                        {update.action_taken && <p style={styles.timelineText}><strong>Action:</strong> {update.action_taken}</p>}
-                        {update.assigned_to_name && <p style={styles.timelineText}><strong>Assigned to:</strong> {update.assigned_to_name}</p>}
-                        {update.next_step && <p style={styles.timelineText}><strong>Next step:</strong> {update.next_step}</p>}
-                        {update.due_at && <p style={styles.timelineText}><strong>Due:</strong> {formatDateTime(update.due_at)}</p>}
+                        <p style={styles.timelineText}>{entry.summary}</p>
+                        {entry.metadata?.note && <p style={styles.timelineText}><strong>Note:</strong> {entry.metadata.note}</p>}
+                        {entry.metadata?.body && <p style={styles.timelineText}><strong>Comment:</strong> {entry.metadata.body}</p>}
+                        {entry.metadata?.action_taken && <p style={styles.timelineText}><strong>Action:</strong> {entry.metadata.action_taken}</p>}
+                        {entry.metadata?.assigned_to_name && <p style={styles.timelineText}><strong>Assigned to:</strong> {entry.metadata.assigned_to_name}</p>}
+                        {entry.metadata?.next_step && <p style={styles.timelineText}><strong>Next step:</strong> {entry.metadata.next_step}</p>}
+                        {entry.metadata?.due_at && <p style={styles.timelineText}><strong>Due:</strong> {formatDateTime(entry.metadata.due_at)}</p>}
                       </article>
                     ))}
                   </div>
@@ -863,10 +1209,41 @@ const ManageIncidentsPage = () => {
               </div>
             </>
           )}
-        </aside>
+        </section>
       </section>
     </div>
   );
+};
+
+const formatAccessLevel = (value) => {
+  if (value === "lead") {
+    return "Lead";
+  }
+  if (value === "viewer") {
+    return "Viewer";
+  }
+  return "Contributor";
+};
+
+const formatActivityLabel = (value) => {
+  if (value === "institution_shared") {
+    return "Shared";
+  }
+  if (value === "comment_added") {
+    return "Comment";
+  }
+  if (value === "follow_up_changed") {
+    return "Follow-up";
+  }
+  if (value === "location_updated") {
+    return "Map";
+  }
+  return "Update";
+};
+
+const formatActorContext = (entry) => {
+  const parts = [entry.actor_institution_name, entry.actor_facility_name].filter(Boolean);
+  return parts.join(" / ") || "Institution not captured";
 };
 
 const formatStatus = (value) => {
@@ -987,7 +1364,7 @@ const styles = {
   },
   workspaceGrid: {
     display: "grid",
-    gridTemplateColumns: "minmax(0, 1.3fr) minmax(320px, 0.9fr)",
+    gridTemplateColumns: "minmax(0, 1fr)",
     gap: "16px",
     alignItems: "start",
   },
@@ -1002,8 +1379,8 @@ const styles = {
     padding: "18px",
     backgroundColor: "#ffffff",
     border: "1px solid #dbeafe",
-    position: "sticky",
-    top: "24px",
+    display: "grid",
+    gap: "16px",
   },
   sectionHead: {
     display: "flex",
@@ -1030,6 +1407,25 @@ const styles = {
     border: "1px solid #e2e8f0",
     borderRadius: "999px",
     padding: "6px 10px",
+  },
+  queueActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  queueSummary: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+    alignItems: "center",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    border: "1px solid #dbeafe",
+    backgroundColor: "#f0fdf4",
+    color: "#0f172a",
+    fontSize: "13px",
+    fontWeight: 600,
   },
   tableWrap: {
     overflowX: "auto",
@@ -1105,11 +1501,62 @@ const styles = {
     backgroundColor: "#f8fafc",
     marginBottom: "16px",
   },
+  newsCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    padding: "14px",
+    backgroundColor: "#f8fafc",
+    marginBottom: "16px",
+    display: "grid",
+    gap: "12px",
+  },
+  newsQuery: {
+    fontSize: "12px",
+    color: "#475569",
+    fontWeight: 600,
+  },
+  newsLink: {
+    color: "#0f766e",
+    fontSize: "14px",
+    fontWeight: 700,
+    textDecoration: "none",
+  },
   descriptionText: {
     margin: "8px 0 0",
     fontSize: "14px",
     lineHeight: 1.5,
     color: "#0f172a",
+  },
+  collaborationCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    padding: "14px",
+    backgroundColor: "#f8fafc",
+    marginBottom: "16px",
+    display: "grid",
+    gap: "12px",
+  },
+  collaborationList: {
+    display: "grid",
+    gap: "10px",
+  },
+  collaborationChip: {
+    display: "grid",
+    gap: "4px",
+    borderRadius: "12px",
+    padding: "12px",
+    backgroundColor: "#ffffff",
+    border: "1px solid #dbeafe",
+  },
+  collaborationName: {
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  collaborationMeta: {
+    fontSize: "12px",
+    color: "#64748b",
+    fontWeight: 600,
   },
   responseCard: {
     border: "1px solid #e2e8f0",
@@ -1245,6 +1692,18 @@ const styles = {
     fontSize: "12px",
     color: "#64748b",
     fontWeight: 600,
+  },
+  timelinePill: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px 10px",
+    borderRadius: "999px",
+    fontSize: "12px",
+    fontWeight: 700,
+    backgroundColor: "#ecfeff",
+    color: "#155e75",
+    border: "1px solid #a5f3fc",
   },
   timelineText: {
     margin: "6px 0 0",

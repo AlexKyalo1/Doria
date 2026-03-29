@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { apiFetch } from "../utils/apiFetch";
+import { ACCOUNTS_API_BASE } from "../utils/apiBase";
 
 const RegistrationPage = () => {
   const [username, setUsername] = useState("");
@@ -22,7 +23,7 @@ const RegistrationPage = () => {
     }
 
     try {
-      const res = await apiFetch("http://127.0.0.1:8000/api/accounts/register/", {
+      const res = await apiFetch(`${ACCOUNTS_API_BASE}/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password, confirm_password: confirmPassword }),
@@ -90,12 +91,14 @@ const RegistrationPage = () => {
 
   return (
     <div style={{
-      minHeight: "100%",
+      minHeight: "100vh",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
       fontFamily: "Arial, sans-serif",
       position: "relative",
+      padding: "24px 16px",
+      boxSizing: "border-box",
     }}>
       {/* Hex pattern background */}
       <div style={hexPatternStyle}></div>

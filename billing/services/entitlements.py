@@ -7,6 +7,8 @@ from security.models import SecurityFacility
 from billing.constants import (
     DEFAULT_FREE_PLAN_CODE,
     FEATURE_AI_INSIGHTS,
+    FEATURE_CHAT_SUPPORT,
+    FEATURE_MAX_CHAT_CONVERSATIONS_PER_MONTH,
     FEATURE_MAX_AI_QUERIES_PER_MONTH,
     FEATURE_MAX_FACILITIES,
     FEATURE_MAX_MEMBERS,
@@ -152,6 +154,18 @@ def get_ai_usage_summary(institution):
     }
 
 
+def get_chat_usage_summary(institution):
+    limit_value = get_limit(institution, FEATURE_MAX_CHAT_CONVERSATIONS_PER_MONTH)
+    used = get_feature_usage(institution, FEATURE_MAX_CHAT_CONVERSATIONS_PER_MONTH)
+    remaining = None if limit_value is None else max(limit_value - used, 0)
+    return {
+        "used": used,
+        "limit": limit_value,
+        "remaining": remaining,
+        "period_start": current_billing_period_start().isoformat(),
+    }
+
+
 def assert_facility_limit_available(institution, *, excluding_facility_id=None):
     max_facilities = get_limit(institution, FEATURE_MAX_FACILITIES)
     if max_facilities is None:
@@ -185,4 +199,19 @@ def assert_ai_usage_available(institution):
         return summary
     if summary["used"] >= limit_value:
         raise BillingLimitError("This institution has exhausted its monthly AI insights quota.")
+    return summary
+
+
+def assert_chat_feature_enabled(institution):
+    if not is_feature_enabled(institution, FEATURE_CHAT_SUPPORT, default=False):
+        raise BillingLimitError("Chat support is not enabled for this institution.")
+
+
+def assert_chat_usage_available(institution):
+    summary = get_chat_usage_summary(institution)
+    limit_value = summary["limit"]
+    if limit_value is None:
+        return summary
+    if summary["used"] >= limit_value:
+        raise BillingLimitError("This institution has exhausted its monthly chat conversation quota.")
     return summary

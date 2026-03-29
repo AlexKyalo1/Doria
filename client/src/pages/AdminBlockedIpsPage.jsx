@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../utils/apiFetch";
+import { SECURITY_API_BASE as SECURITY_API } from "../utils/apiBase";
 import { useColorMode } from "../utils/useColorMode";
-
-const SECURITY_API = "http://127.0.0.1:8000/api/security";
 
 const AdminBlockedIpsPage = () => {
   const { theme } = useColorMode();

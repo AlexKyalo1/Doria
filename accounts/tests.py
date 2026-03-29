@@ -46,6 +46,12 @@ class InstitutionApiTests(APITestCase):
         self.admin = User.objects.create_user(username="admin", password="password123")
         self.member = User.objects.create_user(username="member", password="password123")
         self.outsider = User.objects.create_user(username="outsider", password="password123")
+        self.site_admin = User.objects.create_user(
+            username="siteadmin",
+            password="password123",
+            is_staff=True,
+            is_superuser=True,
+        )
 
         self.institution = Institution.objects.create(name="Acme", owner=self.owner)
         InstitutionMembership.objects.create(
@@ -83,6 +89,29 @@ class InstitutionApiTests(APITestCase):
         self.institution.refresh_from_db()
         self.assertEqual(self.institution.name, "Updated by Admin")
         self.assertEqual(self.institution.description, "Admin edit")
+
+    def test_site_admin_can_list_and_view_all_institutions(self):
+        self.client.force_authenticate(user=self.site_admin)
+
+        list_response = self.client.get("/api/accounts/institutions/")
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(list_response.json()["institutions"]), 1)
+
+        detail_response = self.client.get(f"/api/accounts/institutions/{self.institution_hash}/")
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_response.json()["institution"]["name"], "Acme")
+
+        members_response = self.client.get(
+            f"/api/accounts/institutions/{self.institution_hash}/members/list/"
+        )
+        self.assertEqual(members_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(members_response.json()["members"]), 2)
+
+    def test_outsider_cannot_view_institution_detail(self):
+        self.client.force_authenticate(user=self.outsider)
+
+        detail_response = self.client.get(f"/api/accounts/institutions/{self.institution_hash}/")
+        self.assertEqual(detail_response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_can_add_member_but_outsider_cannot(self):
         self.client.force_authenticate(user=self.admin)

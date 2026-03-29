@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useColorMode } from "../utils/useColorMode";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../utils/apiFetch";
+import { ACCOUNTS_API_BASE } from "../utils/apiBase";
 
 const ProfilePage = () => {
   const { isDark, theme } = useColorMode();
@@ -15,7 +16,7 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
       setStatus("loading");
       try {
-        const res = await apiFetch("http://127.0.0.1:8000/api/accounts/profile/", {
+        const res = await apiFetch(`${ACCOUNTS_API_BASE}/profile/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

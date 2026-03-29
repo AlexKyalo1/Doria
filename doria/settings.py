@@ -33,7 +33,9 @@ SECRET_KEY = 'django-insecure-wa&6#6zm1_pw%f5dy2r^7#u*ju519ov_vjyij1n&3n0mo9%*5$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["doria.matokeo.co.ke", "127.0.0.1", "localhost"]
+PRODUCTION_ALLOWED_HOSTS = ["doria.matokeo.co.ke"]
+DEVELOPMENT_ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
+ALLOWED_HOSTS = ["*"] if DEBUG else [*PRODUCTION_ALLOWED_HOSTS, *DEVELOPMENT_ALLOWED_HOSTS]
 
 
 # Application definition
@@ -49,6 +51,7 @@ INSTALLED_APPS = [
     'core',
     'security',
     'incidents',
+    'chat',
     'accounts',
     'billing',
     'rest_framework',
@@ -67,8 +70,25 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
+
+# Allow local-network frontend origins during development, regardless of the
+# current device IP, while keeping production restricted to explicit origins.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https?://localhost(?::\d+)?$",
+    r"^https?://127\.0\.0\.1(?::\d+)?$",
+]
+
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES.extend(
+        [
+            r"^https?://10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?$",
+            r"^https?://192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?$",
+            r"^https?://172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(?::\d+)?$",
+        ]
+    )
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

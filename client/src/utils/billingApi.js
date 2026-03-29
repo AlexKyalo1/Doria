@@ -1,7 +1,5 @@
 import { apiFetch } from "./apiFetch";
-
-export const BILLING_API_BASE = "http://127.0.0.1:8000/api/billing";
-export const ACCOUNTS_API_BASE = "http://127.0.0.1:8000/api/accounts";
+import { ACCOUNTS_API_BASE, BILLING_API_BASE } from "./apiBase";
 
 export function buildAuthHeaders(token, extra = {}) {
   return {

@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getFrontendSettings } from "../utils/frontendSettings";
 import { useColorMode } from "../utils/useColorMode";
 import { apiFetch } from "../utils/apiFetch";
-
-const API_BASE = "http://127.0.0.1:8000/api/accounts";
+import { ACCOUNTS_API_BASE as API_BASE } from "../utils/apiBase";
 
 const InstitutionsPage = () => {
   const token = localStorage.getItem("access_token");

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../utils/apiFetch";
+import { ACCOUNTS_API_BASE } from "../utils/apiBase";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -17,7 +19,7 @@ const LoginPage = () => {
     setMessage("");
 
     try {
-      const res = await apiFetch("http://127.0.0.1:8000/api/accounts/token/", {
+      const res = await apiFetch(`${ACCOUNTS_API_BASE}/token/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -33,6 +35,7 @@ const LoginPage = () => {
         setMessage("Login successful.");
         setUsername("");
         setPassword("");
+        setShowPassword(false);
         setShowModal(true);
       } else {
         setStatus("error");
@@ -64,33 +67,66 @@ const LoginPage = () => {
     return "#6c757d";
   };
 
+  const hexPatternStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: `
+      repeating-linear-gradient(
+        45deg,
+        rgba(15, 81, 50, 0.03) 0px,
+        rgba(15, 81, 50, 0.03) 2px,
+        transparent 2px,
+        transparent 12px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        rgba(15, 81, 50, 0.03) 0px,
+        rgba(15, 81, 50, 0.03) 2px,
+        transparent 2px,
+        transparent 12px
+      ),
+      linear-gradient(135deg, #f8fdf9 0%, #eefaf2 100%)
+    `,
+    zIndex: -1,
+  };
+
   return (
     <div
       style={{
-        minHeight: "90vh",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#f4fdf6",
         fontFamily: "Arial, sans-serif",
+        position: "relative",
+        padding: "24px 16px",
+        boxSizing: "border-box",
       }}
     >
+      <div style={hexPatternStyle}></div>
       <div
         style={{
-          backgroundColor: "white",
-          padding: "40px",
-          borderRadius: "15px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          width: "350px",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(5px)",
+          padding: "28px",
+          borderRadius: "14px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+          width: "320px",
+          border: "1px solid rgba(15, 81, 50, 0.1)",
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "25px" }}>
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <h1
             style={{
               color: "#0f5132",
               marginBottom: "10px",
               fontFamily: "Georgia, serif",
-              letterSpacing: "2px",
+              letterSpacing: "1.5px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -104,6 +140,7 @@ const LoginPage = () => {
             style={{
               color: "#0f5132",
               marginBottom: "0",
+              fontSize: "1.35rem",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -128,7 +165,7 @@ const LoginPage = () => {
             autoComplete="username"
             style={{
               padding: "10px",
-              marginBottom: "15px",
+              marginBottom: "12px",
               borderRadius: "8px",
               border: "1px solid #ccc",
             }}
@@ -136,21 +173,47 @@ const LoginPage = () => {
           <label htmlFor="password" style={{ marginBottom: "5px" }}>
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
+          <div
             style={{
-              padding: "10px",
-              marginBottom: "20px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
+              position: "relative",
+              marginBottom: "16px",
             }}
-          />
+          >
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              style={{
+                padding: "10px 64px 10px 10px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((prev) => !prev)}
+              style={{
+                position: "absolute",
+                right: "8px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                border: "none",
+                background: "none",
+                color: "#0f5132",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
           <button
             type="submit"
             style={{
@@ -167,6 +230,27 @@ const LoginPage = () => {
             {status === "loading" ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        {message && !showModal ? (
+          <p
+            style={{
+              marginTop: "16px",
+              padding: "10px 12px",
+              color: getMessageColor(),
+              textAlign: "center",
+              fontWeight: "600",
+              backgroundColor:
+                status === "success"
+                  ? "rgba(15, 81, 50, 0.1)"
+                  : status === "error"
+                    ? "rgba(132, 32, 41, 0.1)"
+                    : "transparent",
+              borderRadius: "8px",
+            }}
+          >
+            {message}
+          </p>
+        ) : null}
 
         <div
           style={{
@@ -217,6 +301,8 @@ const LoginPage = () => {
             justifyContent: "center",
             alignItems: "center",
             animation: "fadeIn 0.5s",
+            zIndex: 1000,
+            backdropFilter: "blur(4px)",
           }}
         >
           <div

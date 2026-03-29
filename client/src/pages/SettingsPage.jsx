@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { ACCOUNTS_API_BASE as API_BASE } from "../utils/apiBase";
 
 import {
   applyColorMode,
@@ -10,8 +11,6 @@ import {
 } from "../utils/frontendSettings";
 import { useColorMode } from "../utils/useColorMode";
 import { apiFetch } from "../utils/apiFetch";
-
-const API_BASE = "http://127.0.0.1:8000/api/accounts";
 
 const settingRows = [
   {

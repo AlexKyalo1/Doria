@@ -137,6 +137,9 @@ def _get_institution_from_hash(institution_hash):
 
 
 def _can_manage_members(user, institution):
+    if _require_site_admin(user):
+        return True
+
     if institution.owner_id == user.id:
         return True
 
@@ -152,6 +155,22 @@ def _require_site_admin(user):
 
 def _require_super_admin(user):
     return bool(user and user.is_authenticated and user.is_superuser)
+
+
+def _can_view_institution(user, institution):
+    if user is None or not user.is_authenticated:
+        return False
+
+    if _require_site_admin(user):
+        return True
+
+    if institution.owner_id == user.id:
+        return True
+
+    return InstitutionMembership.objects.filter(
+        institution=institution,
+        user=user,
+    ).exists()
 
 
 
@@ -313,7 +332,10 @@ def institutions_collection_api(request):
             status=status.HTTP_201_CREATED,
         )
 
-    institutions = request.user.institutions.select_related("owner").all().distinct()
+    if _require_site_admin(request.user):
+        institutions = Institution.objects.select_related("owner").all().order_by("name")
+    else:
+        institutions = request.user.institutions.select_related("owner").all().distinct()
     serializer = InstitutionSerializer(institutions, many=True)
     return Response({"institutions": serializer.data})
 
@@ -326,6 +348,11 @@ def institution_detail_api(request, institution_id):
         return Response({"error": "Institution not found"}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
+        if not _can_view_institution(request.user, institution):
+            return Response(
+                {"error": "Only institution members can view this institution"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = InstitutionSerializer(institution)
         return Response({"institution": serializer.data})
 
@@ -441,10 +468,7 @@ def institution_members_list_api(request, institution_id):
     if institution is None:
         return Response({"error": "Institution not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if not InstitutionMembership.objects.filter(
-        institution=institution,
-        user=request.user,
-    ).exists():
+    if not _can_view_institution(request.user, institution):
         return Response(
             {"error": "Only institution members can view members"},
             status=status.HTTP_403_FORBIDDEN,

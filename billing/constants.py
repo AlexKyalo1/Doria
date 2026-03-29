@@ -1,5 +1,7 @@
 FEATURE_AI_INSIGHTS = "ai_insights"
 FEATURE_MAX_AI_QUERIES_PER_MONTH = "max_ai_queries_per_month"
+FEATURE_CHAT_SUPPORT = "chat_support"
+FEATURE_MAX_CHAT_CONVERSATIONS_PER_MONTH = "max_chat_conversations_per_month"
 FEATURE_MAX_FACILITIES = "max_facilities"
 FEATURE_MAX_MEMBERS = "max_members"
 

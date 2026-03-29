@@ -1,25 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const logoContainer = {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    color: "#0f5132",
-  };
+
   return (
     <div style={containerStyle}>
-      {/* Simple background lines */}
       <div style={linesOverlayStyle}></div>
-      
+
       <header style={headerStyle}>
-       <h1 style={logoStyle}>
-          <span style={logoContainer}>
-            🛡️ Doria
-          </span>
+        <h1 style={logoStyle}>
+          <span style={logoContainerStyle}>Doria</span>
         </h1>
 
         <nav aria-label="Main Navigation" style={navContainer}>
@@ -45,18 +36,50 @@ const LandingPage = () => {
 
       <main style={mainStyle} id="main-content" tabIndex="-1">
         <div style={contentWrapperStyle}>
-          <span style={badgeStyle}>✨ Welcome to Doria</span>
-          
+          <span style={badgeStyle}>Welcome to Doria</span>
+
           <h2 style={headlineStyle}>
             Tambua <span style={accentStyle}>•</span> Chambua <span style={accentStyle}>•</span> Tatua
           </h2>
 
           <p style={descriptionStyle}>
-            Discover insights, analyze information, and solve problems —
-            all in one powerful platform.
+            Discover insights, analyze information, and solve problems in one powerful platform, now with an API
+            platform built to integrate Doria with the systems your organization already uses.
           </p>
 
+          <div style={featureCalloutStyle}>
+            <div style={featureCalloutHeaderStyle}>
+              <span style={featureIconStyle}>{"</>"}</span>
+              <div>
+                <div style={featureTitleStyle}>API Platform for Existing Systems</div>
+                <div style={featureSubtitleStyle}>
+                  Connect Doria with dispatch platforms, hospital systems, security tools, partner applications, and
+                  other operational software through APIs and webhooks.
+                </div>
+              </div>
+            </div>
+            <div style={featurePillsStyle}>
+              <span style={featurePillStyle}>REST APIs</span>
+              <span style={featurePillStyle}>Webhooks</span>
+              <span style={featurePillStyle}>Third-party integrations</span>
+            </div>
+          </div>
+
           <div style={blockButtonContainer}>
+            <button
+              style={publicReportButton}
+              onClick={() => navigate("/report-incident")}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = "#dcfce7";
+                e.target.style.transform = "scale(1.02)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = "#ecfdf5";
+                e.target.style.transform = "scale(1)";
+              }}
+            >
+              Report Incident Publicly
+            </button>
             <button
               style={secondaryBlockButton}
               onClick={() => navigate("/login")}
@@ -84,27 +107,23 @@ const LandingPage = () => {
               }}
             >
               Create Account
-            </button>            
+            </button>
           </div>
 
           <div style={trustBadgesStyle}>
-            <span style={trustItemStyle}>🔒 Secure</span>
-            <span style={trustItemStyle}>⚡ Fast</span>
-            <span style={trustItemStyle}>💡 Smart</span>
+            <span style={trustItemStyle}>Secure</span>
+            <span style={trustItemStyle}>Fast</span>
+            <span style={trustItemStyle}>Smart</span>
           </div>
         </div>
       </main>
 
-      <footer style={footerStyle}>
-        © {new Date().getFullYear()} Doria. All rights reserved.
-      </footer>
+      <footer style={footerStyle}>© {new Date().getFullYear()} Doria. All rights reserved.</footer>
     </div>
   );
 };
 
 export default LandingPage;
-
-/* ================= STYLES ================= */
 
 const containerStyle = {
   minHeight: "100vh",
@@ -116,30 +135,14 @@ const containerStyle = {
   overflow: "hidden",
 };
 
-// Simple diagonal lines overlay
 const linesOverlayStyle = {
   position: "absolute",
   top: 0,
   left: 0,
   right: 0,
   bottom: 0,
-  background: `
-    /* Hex pattern like tactical mesh */
-    repeating-linear-gradient(
-      45deg,
-      rgba(15, 81, 50, 0.03) 0px,
-      rgba(15, 81, 50, 0.03) 2px,
-      transparent 2px,
-      transparent 12px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(15, 81, 50, 0.03) 0px,
-      rgba(15, 81, 50, 0.03) 2px,
-      transparent 2px,
-      transparent 12px
-    )
-  `,
+  background:
+    "repeating-linear-gradient(45deg, rgba(15, 81, 50, 0.03) 0px, rgba(15, 81, 50, 0.03) 2px, transparent 2px, transparent 12px), repeating-linear-gradient(-45deg, rgba(15, 81, 50, 0.03) 0px, rgba(15, 81, 50, 0.03) 2px, transparent 2px, transparent 12px)",
   pointerEvents: "none",
   zIndex: 0,
 };
@@ -163,6 +166,13 @@ const logoStyle = {
   fontWeight: "700",
   color: "#0f5132",
   letterSpacing: "-0.5px",
+};
+
+const logoContainerStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  color: "#0f5132",
 };
 
 const navContainer = {
@@ -201,14 +211,14 @@ const mainStyle = {
   justifyContent: "center",
   alignItems: "center",
   padding: "40px 20px",
-  position: "relative", // To appear above the lines
+  position: "relative",
   zIndex: 1,
 };
 
 const contentWrapperStyle = {
-  maxWidth: "600px",
+  maxWidth: "760px",
   textAlign: "center",
-  position: "relative", // To appear above the lines
+  position: "relative",
 };
 
 const badgeStyle = {
@@ -238,9 +248,69 @@ const accentStyle = {
 const descriptionStyle = {
   fontSize: "18px",
   lineHeight: "1.6",
-  maxWidth: "500px",
-  margin: "0 auto 40px",
+  maxWidth: "660px",
+  margin: "0 auto 28px",
   color: "#4b5563",
+};
+
+const featureCalloutStyle = {
+  maxWidth: "720px",
+  margin: "0 auto 32px",
+  padding: "20px",
+  backgroundColor: "rgba(255, 255, 255, 0.72)",
+  border: "1px solid rgba(25, 135, 84, 0.14)",
+  borderRadius: "20px",
+  boxShadow: "0 12px 28px rgba(15, 81, 50, 0.08)",
+  textAlign: "left",
+};
+
+const featureCalloutHeaderStyle = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "14px",
+  marginBottom: "14px",
+};
+
+const featureIconStyle = {
+  width: "44px",
+  height: "44px",
+  borderRadius: "14px",
+  background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
+  color: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "700",
+  flexShrink: 0,
+};
+
+const featureTitleStyle = {
+  fontSize: "18px",
+  fontWeight: "700",
+  color: "#0f5132",
+  marginBottom: "6px",
+};
+
+const featureSubtitleStyle = {
+  fontSize: "14px",
+  lineHeight: "1.6",
+  color: "#4b5563",
+};
+
+const featurePillsStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "10px",
+};
+
+const featurePillStyle = {
+  padding: "8px 12px",
+  borderRadius: "999px",
+  border: "1px solid rgba(15, 81, 50, 0.12)",
+  backgroundColor: "#f0fdf4",
+  color: "#166534",
+  fontSize: "13px",
+  fontWeight: "600",
 };
 
 const blockButtonContainer = {
@@ -279,11 +349,26 @@ const secondaryBlockButton = {
   transition: "all 0.2s ease",
 };
 
+const publicReportButton = {
+  width: "100%",
+  padding: "16px",
+  backgroundColor: "#ecfdf5",
+  color: "#166534",
+  border: "1px solid #86efac",
+  borderRadius: "12px",
+  fontSize: "16px",
+  fontWeight: "700",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  boxShadow: "0 4px 12px rgba(20, 83, 45, 0.08)",
+};
+
 const trustBadgesStyle = {
   display: "flex",
   justifyContent: "center",
   gap: "24px",
   marginTop: "20px",
+  flexWrap: "wrap",
 };
 
 const trustItemStyle = {
@@ -300,6 +385,6 @@ const footerStyle = {
   fontSize: "14px",
   color: "#9ca3af",
   borderTop: "1px solid rgba(15, 81, 50, 0.1)",
-  position: "relative", // To appear above the lines
+  position: "relative",
   zIndex: 1,
 };

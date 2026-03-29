@@ -18,9 +18,9 @@ export const defaultIncidentIcons = {
 };
 
 export const defaultFrontendSettings = {
-  compactSidebar: false,
+  compactSidebar: true,
   reducedMotion: false,
-  denseContent: false,
+  denseContent: true,
   showInstitutionIds: true,
   colorMode: "light",
   facilityIcons: defaultFacilityIcons,

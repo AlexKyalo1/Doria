@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../utils/apiFetch";
+import { ACCOUNTS_API_BASE as API_BASE } from "../utils/apiBase";
 
 import { useColorMode } from "../utils/useColorMode";
-
-const API_BASE = "http://127.0.0.1:8000/api/accounts";
 
 const DashboardPage = () => {
   const { theme, isDark } = useColorMode();
@@ -89,9 +88,11 @@ const DashboardPage = () => {
   );
 
   const quickActions = [
+    { label: "5-Min Demo", path: "/demo-guide", icon: "\u23f1\ufe0f" },
     { label: "Create Institution", path: "/institutions", icon: "+" },
     { label: "Manage Members", path: "/institutions", icon: "\ud83d\udc65" },
     { label: "AI Insights", path: "/ai/insights", icon: "\ud83e\udde0" },
+    { label: "API Platform", path: "/api-platform", icon: "\ud83d\udd17" },
     { label: "Edit Profile", path: "/profile/update", icon: "\u270e" },
     { label: "Frontend Settings", path: "/settings", icon: "\u2699\ufe0f" },
     { label: "Billing", path: "/billing", icon: "\ud83d\udcb3" },

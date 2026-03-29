@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "../utils/apiFetch";
+import { API_BASE } from "../utils/apiBase";
 
 const MyPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch("http://127.0.0.1:8000/api/items/")
+    apiFetch(`${API_BASE}/items/`)
       .then(res => res.json())
       .then(data => {
         setItems(data);

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
+import { ACCOUNTS_API_BASE } from "../utils/apiBase";
 import { applyColorMode, getFrontendSettings } from "../utils/frontendSettings";
 
 const routeTitles = {
@@ -9,15 +10,22 @@ const routeTitles = {
   "/institutions": "Institutions",
   "/facilities": "Facilities",
   "/facilities/map": "Facility Map",
+  "/emergency-services": "Emergency Services",
   "/incidents": "Incidents",
   "/incidents/manage": "Incident Manager",
+  "/incidents/area-intelligence": "Area Intelligence",
+  "/incidents/vip-surveillance": "VIP Surveillance",
+  "/chat": "Call Center Board",
   "/ai/insights": "AI Insights",
   "/settings": "Settings",
   "/billing": "Billing",
+  "/demo-guide": "5-Minute Demo",
   "/dashboard": "Dashboard",
+  "/api-platform": "API Platform",
   "/admin/users": "Admin Users",
   "/admin/security": "Security Control",
   "/admin/billing": "Billing Admin",
+  "/admin/ai-console": "Admin AI Console",
 };
 
 const BasePage = () => {
@@ -33,36 +41,16 @@ const BasePage = () => {
     return { impersonatedUser };
   };
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
   const [openGroups, setOpenGroups] = useState({
-    core: false,
-    operations: false,
     account: false,
+    operations: false,
+    core: false,
     admin: false,
   });
 
   const navGroups = [
-    {
-      id: "core",
-      label: "Core",
-      icon: "\u{1F4CC}",
-      items: [
-        { to: "/dashboard", label: "Dashboard", icon: "\u{1F4CA}" },
-        { to: "/ai/insights", label: "AI Insights", icon: "\u{1F9E0}" },
-      ],
-    },
-    {
-      id: "operations",
-      label: "Operations",
-      icon: "\u{1F6E1}\u{FE0F}",
-      items: [
-        { to: "/incidents", label: "Incidents", icon: "\u{1F6A8}" },
-        { to: "/incidents/manage", label: "Incident Manager", icon: "\u{1F5C2}\u{FE0F}" },
-        { to: "/facilities", label: "Facilities", icon: "\u{1F4CD}" },
-        { to: "/facilities/map", label: "Facility Map", icon: "\u{1F5FA}\u{FE0F}" },
-        { to: "/institutions", label: "Institutions", icon: "\u{1F3DB}\u{FE0F}" },
-      ],
-    },
     {
       id: "account",
       label: "Account",
@@ -75,6 +63,33 @@ const BasePage = () => {
       ],
     },
     {
+      id: "operations",
+      label: "Operations",
+      icon: "\u{1F6E1}\u{FE0F}",
+      items: [
+        { to: "/institutions", label: "Institutions", icon: "\u{1F3DB}\u{FE0F}" },
+        { to: "/facilities", label: "Facilities", icon: "\u{1F4CD}" },
+        { to: "/facilities/map", label: "Facility Map", icon: "\u{1F5FA}\u{FE0F}" },
+        { to: "/emergency-services", label: "Emergency Services", icon: "\u{1F691}" },
+        { to: "/chat", label: "Call Center Board", icon: "\u{1F4DE}" },
+        { to: "/incidents", label: "Incidents", icon: "\u{1F6A8}" },
+        { to: "/incidents/manage", label: "Incident Manager", icon: "\u{1F5C2}\u{FE0F}" },
+        { to: "/incidents/area-intelligence", label: "Area Intelligence", icon: "\u{1F5FA}\u{FE0F}" },
+        { to: "/incidents/vip-surveillance", label: "VIP Surveillance", icon: "\u{1F576}\u{FE0F}" },
+      ],
+    },
+    {
+      id: "core",
+      label: "Core",
+      icon: "\u{1F4CC}",
+      items: [
+        { to: "/demo-guide", label: "5-Min Demo", icon: "\u{23F1}\u{FE0F}" },
+        { to: "/dashboard", label: "Dashboard", icon: "\u{1F4CA}" },
+        { to: "/ai/insights", label: "AI Insights", icon: "\u{1F9E0}" },
+        { to: "/api-platform", label: "API Platform", icon: "\u{1F517}" },
+      ],
+    },
+    {
       id: "admin",
       label: "Admin",
       icon: "\u{1F6E0}\u{FE0F}",
@@ -82,6 +97,7 @@ const BasePage = () => {
         { to: "/admin/users", label: "Admin Users", icon: "\u{1F6E0}\u{FE0F}" },
         { to: "/admin/security", label: "Security Control", icon: "\u{1F510}" },
         { to: "/admin/billing", label: "Billing Admin", icon: "\u{1F4BC}" },
+        { to: "/admin/ai-console", label: "AI Console", icon: "\u{1F916}", requiresSuperuser: true },
       ],
       gated: true,
     },
@@ -120,7 +136,7 @@ const BasePage = () => {
 
     const fetchCurrentUser = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/accounts/profile/", {
+        const res = await fetch(`${ACCOUNTS_API_BASE}/profile/`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -186,20 +202,22 @@ const BasePage = () => {
     (currentUser?.last_name?.[0] || "")
   ).toUpperCase();
 
-  const sidebarWidth = sidebarOpen
+  const sidebarExpanded = sidebarOpen || sidebarHovered;
+
+  const sidebarWidth = sidebarExpanded
     ? frontendSettings.compactSidebar
-      ? "240px"
-      : "280px"
+      ? "220px"
+      : "260px"
     : frontendSettings.compactSidebar
-      ? "72px"
-      : "80px";
+      ? "64px"
+      : "72px";
 
   const transition = frontendSettings.reducedMotion ? "none" : "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
 
   const dynamicContentStyle = useMemo(
     () => ({
       ...contentStyle,
-      padding: frontendSettings.denseContent ? "18px" : "32px",
+      padding: frontendSettings.denseContent ? "14px" : "24px",
       backgroundColor: isDark ? "#0f172a" : "#f0fdf4",
     }),
     [frontendSettings.denseContent, isDark]
@@ -235,11 +253,21 @@ return (
           transition,
           background: theme.sidebarGradient,
         }}
+        onMouseEnter={() => {
+          if (!sidebarOpen) {
+            setSidebarHovered(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!sidebarOpen) {
+            setSidebarHovered(false);
+          }
+        }}
       >
         <div style={logoContainerStyle}>
           <div style={logoWrapperStyle}>
             <span style={logoIconStyle}>🛡️</span>
-            {sidebarOpen && <span style={logoTextStyle}>Doria</span>}
+            {sidebarExpanded && <span style={logoTextStyle}>Doria</span>}
           </div>
         </div>
 
@@ -251,23 +279,23 @@ return (
         <button
           type="button"
           onClick={() => toggleGroup(group.id)}
-          style={groupHeaderStyle(sidebarOpen)}
+          style={groupHeaderStyle(sidebarExpanded)}
           aria-expanded={openGroups[group.id]}
         >
           <span style={linkIconStyle}>{group.icon}</span>
-          {sidebarOpen && (
+          {sidebarExpanded && (
             <>
               <span style={groupLabelStyle}>{group.label}</span>
               <span style={groupChevronStyle}>{openGroups[group.id] ? "\u{1F53C}" : "\u{1F53D}"}</span>
             </>
           )}
         </button> 
-        {openGroups[group.id] && (
+        {sidebarExpanded && openGroups[group.id] && (
           <div style={groupItemsStyle}>
-            {group.items.map((item) => (
-              <NavLink key={item.to} to={item.to} style={({ isActive }) => getLinkStyle(isActive, sidebarOpen)}>
+            {group.items.filter((item) => !item.requiresSuperuser || Boolean(currentUser?.is_superuser)).map((item) => (
+              <NavLink key={item.to} to={item.to} style={({ isActive }) => getLinkStyle(isActive, sidebarExpanded)}>
                 <span style={linkIconStyle}>{item.icon}</span>
-                {sidebarOpen && <span style={linkTextStyle}>{item.label}</span>}
+                {sidebarExpanded && <span style={linkTextStyle}>{item.label}</span>}
               </NavLink>
             ))}
           </div>
@@ -276,7 +304,7 @@ return (
     ))}
 </nav>
 
-        {sidebarOpen && (
+        {sidebarExpanded && (
           <div style={sidebarFooterStyle}>
             <div style={userInfoStyle}>
               <span style={userAvatarStyle}>{userInitials}</span>
@@ -336,7 +364,7 @@ return (
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
-              <span style={logoutIconStyle}>{"\ud83d\udeaa"}</span>
+              <span style={logoutIconStyle}>{"\u21AA"}</span>
               Logout
             </button>
           </div>
@@ -647,22 +675,6 @@ const groupItemsStyle = {
 
 
 export default BasePage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
